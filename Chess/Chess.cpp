@@ -24,11 +24,16 @@ enum boardColumn {
 };
 int nGameBoard[8 * 8];
 int nTurn;
-bool bGame = true;
+bool bGame;
+bool prevLeftArrowState;
+bool prevRightArrowState;
+bool prevUpArrowState;
+bool prevDownArrowState;
+int tempPiece;
 
 void PlacePiece(int piece, int Column, int Row)
 {
-	nGameBoard[(Column - 1) * 8 + Row - 1] = piece;
+	nGameBoard[(Row - 1) * 8 + Column - 1] = piece;
 };
 
 void StartGame()
@@ -67,9 +72,9 @@ void StartGame()
 
 void DrawBoard()
 {
-	for (int row = 0; row < 8; row++)
+	for (int column = 0; column < 8; column++)
 	{
-		for (int column = 0; column < 8; column++)
+		for (int row = 0; row < 8; row++)
 		{
 			cout << nGameBoard[(column) * 8 + row] << ((nGameBoard[(column) * 8 + row] == 0) ? "  " : " ");
 		}
@@ -77,18 +82,93 @@ void DrawBoard()
 	}
 }
 
+int UpdateCursorPosition(int cursorPosition)
+{
+		// Check if the key is currently pressed
+		bool currLeftArrowState = (GetAsyncKeyState(VK_LEFT) & 0x8000);
+		bool currRightArrowState = (GetAsyncKeyState(VK_RIGHT) & 0x8000);
+		bool currUpArrowState = (GetAsyncKeyState(VK_UP) & 0x8000);
+		bool currDownArrowState = (GetAsyncKeyState(VK_DOWN) & 0x8000);
+
+		// Check if the key was released
+		bool leftArrowReleased = (prevLeftArrowState && !currLeftArrowState);
+		bool rightArrowReleased = (prevRightArrowState && !currRightArrowState);
+		bool upArrowReleased = (prevUpArrowState && !currUpArrowState);
+		bool downArrowReleased = (prevDownArrowState && !currDownArrowState);
+
+		// Update the previous state of key
+		prevLeftArrowState = currLeftArrowState;
+		prevRightArrowState = currRightArrowState;
+		prevUpArrowState = currUpArrowState;
+		prevDownArrowState = currDownArrowState;
+
+		if (rightArrowReleased)
+		{
+			nGameBoard[cursorPosition] = tempPiece;
+			if (cursorPosition >= 8 * 8 - 1)
+				cursorPosition = -1;
+			cursorPosition++;
+			tempPiece = nGameBoard[cursorPosition];
+		}
+
+		if (leftArrowReleased)
+		{
+			nGameBoard[cursorPosition] = tempPiece;
+			if (cursorPosition <= 0)
+				cursorPosition = 8*8;
+			cursorPosition--;
+		}
+
+		if (downArrowReleased)
+		{
+			nGameBoard[cursorPosition] = tempPiece;
+			if (cursorPosition >= 8 * 8 - 1)
+				cursorPosition = -8;
+			if (cursorPosition / 8 == 7 && cursorPosition > 0)
+				cursorPosition = (cursorPosition % 8) - 7;
+			cursorPosition += 8;
+		}
+
+		if (upArrowReleased)
+		{
+			nGameBoard[cursorPosition] = tempPiece;
+			if (cursorPosition <= 0)
+				cursorPosition = 8 * 9 - 1;
+			if (cursorPosition / 8 == 0 && cursorPosition < 8 * 8)
+				cursorPosition = 8 * 8 + cursorPosition - 1;
+			cursorPosition -= 8;
+		}
+
+		if (nGameBoard[cursorPosition] != 99)
+			tempPiece = nGameBoard[cursorPosition];
+
+		return cursorPosition;
+}
+
 int main()
 {
+	prevLeftArrowState = false;
+	prevRightArrowState = false;
+	prevUpArrowState = false;
+	prevDownArrowState = false;
+	bGame = true;
+	tempPiece = nGameBoard[0];
+
 	StartGame();
+
+	int cursorPosition = 0;
 
 	while(bGame)
 	{
+		cursorPosition = UpdateCursorPosition(cursorPosition);
+
+		nGameBoard[cursorPosition] = 99;
+
 		std::system("CLS");
 		DrawBoard();
 		Sleep(1);
 	}
 
-							
 	std::system("PAUSE");
 
 	return 0;
