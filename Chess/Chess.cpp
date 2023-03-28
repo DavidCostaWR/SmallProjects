@@ -2,6 +2,8 @@
 #include <vector>
 #include <Windows.h>
 #include <stdio.h>
+
+#include "..\olcConsoleGameEngine.h"
 using namespace std;
 
 enum chessPieces {
@@ -30,6 +32,7 @@ bool prevRightArrowState;
 bool prevUpArrowState;
 bool prevDownArrowState;
 int tempPiece;
+int cursorPosition;
 
 void PlacePiece(int piece, int Column, int Row)
 {
@@ -38,6 +41,15 @@ void PlacePiece(int piece, int Column, int Row)
 
 void StartGame()
 {
+	// Initializations
+	prevLeftArrowState = false;
+	prevRightArrowState = false;
+	prevUpArrowState = false;
+	prevDownArrowState = false;
+	bGame = true;
+	tempPiece = nGameBoard[0];
+	cursorPosition = 0;
+
 	//Clear Board
 	for (int cell = 0; cell < 8 * 8; cell++)
 		nGameBoard[cell] = 0;
@@ -147,16 +159,7 @@ int UpdateCursorPosition(int cursorPosition)
 
 int main()
 {
-	prevLeftArrowState = false;
-	prevRightArrowState = false;
-	prevUpArrowState = false;
-	prevDownArrowState = false;
-	bGame = true;
-	tempPiece = nGameBoard[0];
-
 	StartGame();
-
-	int cursorPosition = 0;
 
 	while(bGame)
 	{
@@ -166,7 +169,7 @@ int main()
 
 		std::system("CLS");
 		DrawBoard();
-		Sleep(1);
+		//Sleep(1);
 	}
 
 	std::system("PAUSE");
