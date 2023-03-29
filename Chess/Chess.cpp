@@ -265,6 +265,7 @@ int main()
 	while(true)
 	{
 		ClearBoard();
+		vRefreshDisplay(screen);
 		// Collect player names and randomize order
 		cout << "Player 1: ";
 		cin >> sPlayer1;
