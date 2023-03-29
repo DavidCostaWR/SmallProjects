@@ -9,11 +9,6 @@
 //#include "..\olcConsoleGameEngine.h"
 using namespace std;
 
-enum chessPieces {
-	blank = 0, frame,
-	wPawn = 11,	wRook, wKnight, wBishop, wQueen, wKing,
-	bPawn = 21, bRook, bKnight, bBishop, bQueen,bKing
-};
 enum boardColumn {
 	a = 1, b, c, d, e, f, g, h
 };
@@ -39,10 +34,7 @@ bool spaceBarReleased = false;
 string sPlayer1;
 string sPlayer2;
 
-struct Position {
-	int x = 0;
-	int y = 0;
-};
+struct Position { int x = 0; int y = 0;};
 
 list<Position> PiecePlacement;
 list<wchar_t> CapturedP1;
@@ -50,6 +42,7 @@ list<wchar_t> CapturedP2;
 
 Position cursorPosition = { 0, 7 };
 Position selectedPiecePosition;
+
 
 void vRefreshDisplay(wchar_t* screen)
 {
@@ -85,6 +78,11 @@ bool IsWhitePiece(Position P)
 	return false;
 }
 
+bool IsBlankSpace(Position P)
+{
+	return (board[P.x + P.y * nBoardWidth] == ' ');
+}
+
 void ClearBoard()
 {
 	for (int x = 0; x < nBoardWidth; x++)
@@ -94,49 +92,15 @@ void ClearBoard()
 	}
 }
 
-void PlacePiece(int nPiece, int x, int y)
+void ClearScreen(wchar_t* screen)
 {
-	wchar_t cPiece = ' ';
+	for (int i = 0; i < nScreenWidth * nScreenHeight; i++)
+		screen[i] = L' ';
+}
 
-	switch (nPiece % 10){
-	case(1):
-		if(nPiece / 10 == 1)
-			cPiece = 'P';
-		if (nPiece / 10 == 2)
-			cPiece = 'p';
-		break;
-	case(2):
-		if (nPiece / 10 == 1)
-			cPiece = 'R';
-		if (nPiece / 10 == 2)
-			cPiece = 'r';
-		break;
-	case(3):
-		if (nPiece / 10 == 1)
-			cPiece = 'N';
-		if (nPiece / 10 == 2)
-			cPiece = 'n';
-		break;
-	case(4):
-		if (nPiece / 10 == 1)
-			cPiece = 'B';
-		if (nPiece / 10 == 2)
-			cPiece = 'b';
-		break;
-	case(5):
-		if (nPiece / 10 == 1)
-			cPiece = 'Q';
-		if (nPiece / 10 == 2)
-			cPiece = 'q';
-		break;
-	case(6):
-		if (nPiece / 10 == 1)
-			cPiece = 'K';
-		if (nPiece / 10 == 2)
-			cPiece = 'k';
-		break;
-	}
-	board[x - 1 + (y - 1) * nBoardWidth] = cPiece;
+void PlacePiece(wchar_t Piece, int x, int y)
+{
+	board[x - 1 + (y - 1) * nBoardWidth] = Piece;
 };
 
 void DrawBoard()
@@ -231,6 +195,47 @@ bool UpdateKeyPress()
 		return false;
 }
 
+void ResetBoard()
+{
+	prevLeftArrowState = false;
+	prevRightArrowState = false;
+	prevUpArrowState = false;
+	prevDownArrowState = false;
+	CapturedP1.clear();
+	CapturedP2.clear();
+
+
+	//Clear Board
+	ClearBoard();
+
+	//Place pawns
+	for (int i = 1; i <= 8; i++)
+	{
+		PlacePiece('P', i, 7);
+		PlacePiece('p', i, 2);
+	}
+
+	//Place Black Pieces
+	PlacePiece('r', a, 1);
+	PlacePiece('n', b, 1);
+	PlacePiece('b', c, 1);
+	PlacePiece('q', d, 1);
+	PlacePiece('k', e, 1);
+	PlacePiece('b', f, 1);
+	PlacePiece('n', g, 1);
+	PlacePiece('r', h, 1);
+
+	//Place White Pieces
+	PlacePiece('R', a, 8);
+	PlacePiece('N', b, 8);
+	PlacePiece('B', c, 8);
+	PlacePiece('Q', d, 8);
+	PlacePiece('K', e, 8);
+	PlacePiece('B', f, 8);
+	PlacePiece('N', g, 8);
+	PlacePiece('R', h, 8);
+};
+
 void GameOver(string player, wchar_t* screen)
 {
 	const string GameOver = "Congratulations " + player + ". You have won the match";
@@ -252,929 +257,887 @@ void GameOver(string player, wchar_t* screen)
 
 int main()
 {
-	// Use current time as seed for random generator
-	srand(time(0));
+		// Use current time as seed for random generator
+		srand(time(0));
+		wchar_t* screen = new wchar_t[nScreenWidth * nScreenHeight];
+		screen[nScreenWidth * nScreenHeight - 1] = '\0';
 
-	wchar_t* screen = new wchar_t[nScreenWidth * nScreenHeight];
-	screen[nScreenWidth * nScreenHeight - 1] = '\0';
-
-	// StartGame
-	// Initializations
-	prevLeftArrowState = false;
-	prevRightArrowState = false;
-	prevUpArrowState = false;
-	prevDownArrowState = false;
-	bGame = true;
-	CapturedP1.clear();
-	CapturedP2.clear();
-
-
-	//Clear Board
-	ClearBoard();
-
-	//Place pawns
-	for (int i = 1; i <= 8; i++)
+	while(true)
 	{
-		PlacePiece(wPawn, i, 7);
-		PlacePiece(bPawn, i, 2);
-	}
-
-	//Place Black Pieces
-	PlacePiece(bRook, a, 1);
-	PlacePiece(bKnight, b, 1);
-	PlacePiece(bBishop, c, 1);
-	PlacePiece(bQueen, d, 1);
-	PlacePiece(bKing, e, 1);
-	PlacePiece(bBishop, f, 1);
-	PlacePiece(bKnight, g, 1);
-	PlacePiece(bRook, h, 1);
-
-	//Place White Pieces
-	PlacePiece(wRook, a, 8);
-	PlacePiece(wKnight, b, 8);
-	PlacePiece(wBishop, c, 8);
-	PlacePiece(wQueen, d, 8);
-	PlacePiece(wKing, e, 8);
-	PlacePiece(wBishop, f, 8);
-	PlacePiece(wKnight, g, 8);
-	PlacePiece(wRook, h, 8);
-
-	// Collect player names and randomize order
-	cout << "Player 1: ";
-	cin >> sPlayer1;
-	cout << "Player 2: ";
-	cin >> sPlayer2;
-	if (rand() % 2 == 1)
-	{
-		string temp = sPlayer1;
-		sPlayer1 = sPlayer2;
-		sPlayer2 = temp;
-	}
-
-	bGame = true;
-
-	while(bGame)
-	{
-
-		// Piece positions
-		board[2 + 5 * nBoardWidth] = 'r';
-		board[5 * nBoardWidth] = 'Q';
-
-		// Game Mechanics
-		switch (nGamePhase)
+		ClearBoard();
+		// Collect player names and randomize order
+		cout << "Player 1: ";
+		cin >> sPlayer1;
+		cout << "Player 2: ";
+		cin >> sPlayer2;
+		if (rand() % 2 == 1)
 		{
-		case(CHOOSE_PIECE):
-			if (spaceBarReleased)
+			string temp = sPlayer1;
+			sPlayer1 = sPlayer2;
+			sPlayer2 = temp;
+		}
+
+		ResetBoard();
+		bGame = true;
+
+		while (bGame)
+		{
+
+			// Game Mechanics
+			switch (nGamePhase)
 			{
-				if (nTurn % 2 == 1 && !IsWhitePiece(cursorPosition))
-					break;
-				if (nTurn % 2 == 0 && !IsBlackPiece(cursorPosition))
-					break;
-				selectedPiecePosition = cursorPosition;
-				nGamePhase++; 
-				break;
-			}
-			PiecePlacement.clear();
-			if(nTurn % 2 == 1)
-			{
-				int x = cursorPosition.x, y = cursorPosition.y;
-				Position New;
-				bool PieceMoved = false;
-				// PAWN
-				if (board[x + y * nBoardWidth] == 'P')
+			case(CHOOSE_PIECE):
+				if (spaceBarReleased)
 				{
-					// Top Row : TODO - Choose piece to switch
-					if (y == 0)
+					if (nTurn % 2 == 1 && !IsWhitePiece(cursorPosition))
 						break;
-
-					// 1 row
-					New = { x, y - 1 };
-					if (board[New.x + New.y * nBoardWidth] == ' ')
-						PiecePlacement.push_back(New);
-
-					// 2 rows
-					New = { x, y - 2 };
-					if (y == 6 && board[x + (y - 1) * nBoardWidth] == ' ')
-						PiecePlacement.push_back(New);
-
-					// Diagonal
-					New = { x + 1 , y - 1 };
-					if (IsBlackPiece(New))
-						PiecePlacement.push_back(New);
-					New = { x - 1 , y - 1 };
-					if (IsBlackPiece(New))
-						PiecePlacement.push_back(New);
-
+					if (nTurn % 2 == 0 && !IsBlackPiece(cursorPosition))
+						break;
+					selectedPiecePosition = cursorPosition;
+					nGamePhase++;
 					break;
 				}
-				// KNIGHT
-				if (board[x + y * nBoardWidth] == 'N')
+				PiecePlacement.clear();
+				if (nTurn % 2 == 1)
 				{
-					for (int X = -2; X < 3; X++)
+					int x = cursorPosition.x, y = cursorPosition.y;
+					Position New;
+					bool PieceMoved = false;
+					// PAWN
+					if (board[x + y * nBoardWidth] == 'P')
 					{
-						for (int Y = -2; Y < 3; Y++)
+						// Top Row : TODO - Choose piece to switch
+						if (y == 0)
+							break;
+
+						// 1 row
+						New = { x, y - 1 };
+						if (board[New.x + New.y * nBoardWidth] == ' ')
+							PiecePlacement.push_back(New);
+
+						// 2 rows
+						New = { x, y - 2 };
+						if (y == 6 && board[x + (y - 1) * nBoardWidth] == ' ')
+							PiecePlacement.push_back(New);
+
+						// Diagonal
+						New = { x + 1 , y - 1 };
+						if (IsBlackPiece(New))
+							PiecePlacement.push_back(New);
+						New = { x - 1 , y - 1 };
+						if (IsBlackPiece(New))
+							PiecePlacement.push_back(New);
+
+						break;
+					}
+					// KNIGHT
+					if (board[x + y * nBoardWidth] == 'N')
+					{
+						for (int X = -2; X < 3; X++)
 						{
-							if (abs(X) + abs(Y) == 3)
+							for (int Y = -2; Y < 3; Y++)
 							{
-								New.x = x + X; New.y = y + Y;
-								if (InGameBounds(New))
-									if (board[New.x + New.y * nBoardWidth] == ' ' || IsBlackPiece(New))
-										PiecePlacement.push_back(New);
+								if (abs(X) + abs(Y) == 3)
+								{
+									New.x = x + X; New.y = y + Y;
+									if (InGameBounds(New))
+										if (board[New.x + New.y * nBoardWidth] == ' ' || IsBlackPiece(New))
+											PiecePlacement.push_back(New);
+								}
 							}
 						}
+						break;
 					}
-					break;
-				}
-				// BISHOP
-				if (board[x + y * nBoardWidth] == 'B')
-				{
-					// NE
-					bool hitPiece = false;
-					New = cursorPosition;
-					while(!hitPiece)
+					// BISHOP
+					if (board[x + y * nBoardWidth] == 'B')
 					{
-						New = { New.x + 1, New.y - 1 };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+						// NE
+						bool hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
 						{
-							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
+							New = { New.x + 1, New.y - 1 };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
 								hitPiece = true;
 						}
-						else
-							hitPiece = true;
-					}
-					// SE
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x + 1, New.y + 1 };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+						// SE
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
 						{
-							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
+							New = { New.x + 1, New.y + 1 };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
 								hitPiece = true;
 						}
-						else
-							hitPiece = true;
-					}
-					// SW
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x - 1, New.y + 1 };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+						// SW
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
 						{
-							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
+							New = { New.x - 1, New.y + 1 };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
 								hitPiece = true;
 						}
-						else
-							hitPiece = true;
-					}
-					// NW
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x - 1, New.y - 1 };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+						// NW
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
 						{
-							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
+							New = { New.x - 1, New.y - 1 };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
 								hitPiece = true;
 						}
-						else
-							hitPiece = true;
+						break;
 					}
-					break;
-				}
-				// ROOK
-				if (board[x + y * nBoardWidth] == 'R')
-				{
-					// N
-					bool hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
+					// ROOK
+					if (board[x + y * nBoardWidth] == 'R')
 					{
+						// N
+						bool hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x, New.y - 1 };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// S
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x, New.y + 1 };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// E
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x + 1, New.y };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// W
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x - 1, New.y };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						break;
+						// Todo: Castling
+					}
+					// QUEEN
+					if (board[x + y * nBoardWidth] == 'Q')
+					{
+						// N
+						bool hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x, New.y - 1 };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// S
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x, New.y + 1 };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// E
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x + 1, New.y };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// W
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x - 1, New.y };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+
+						// NE
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x + 1, New.y - 1 };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// SE
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x + 1, New.y + 1 };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// SW
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x - 1, New.y + 1 };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// NW
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x - 1, New.y - 1 };
+							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsBlackPiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+
+						break;
+					}
+					// KING
+					if (board[x + y * nBoardWidth] == 'K')
+					{
+						// N
+						New = cursorPosition;
 						New = { New.x, New.y - 1 };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-						{
+						if (!IsWhitePiece(New) && InGameBounds(New))
 							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// S
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
+						// S
+						New = cursorPosition;
 						New = { New.x, New.y + 1 };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-						{
+						if (!IsWhitePiece(New) && InGameBounds(New))
 							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// E
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
+						// E
+						New = cursorPosition;
 						New = { New.x + 1, New.y };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-						{
+						if (!IsWhitePiece(New) && InGameBounds(New))
 							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// W
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
+						// W
+						New = cursorPosition;
 						New = { New.x - 1, New.y };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-						{
+						if (!IsWhitePiece(New) && InGameBounds(New))
 							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					break;
-					// Todo: Castling
-				}
-				// QUEEN
-				if (board[x + y * nBoardWidth] == 'Q')
-				{
-					// N
-					bool hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x, New.y - 1 };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// S
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x, New.y + 1 };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// E
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x + 1, New.y };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// W
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x - 1, New.y };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
 
-					// NE
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
+						// NE
+						New = cursorPosition;
 						New = { New.x + 1, New.y - 1 };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-						{
+						if (!IsWhitePiece(New) && InGameBounds(New))
 							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// SE
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
+						// SE
+						New = cursorPosition;
 						New = { New.x + 1, New.y + 1 };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-						{
+						if (!IsWhitePiece(New) && InGameBounds(New))
 							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// SW
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
+						// SW
+						New = cursorPosition;
 						New = { New.x - 1, New.y + 1 };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-						{
+						if (!IsWhitePiece(New) && InGameBounds(New))
 							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// NW
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
+						// NW
+						New = cursorPosition;
 						New = { New.x - 1, New.y - 1 };
-						if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-						{
+						if (!IsWhitePiece(New) && InGameBounds(New))
 							PiecePlacement.push_back(New);
-							if (IsBlackPiece(New))
+
+						break;
+					}
+				}
+
+				if (nTurn % 2 == 0)
+				{
+					int x = cursorPosition.x, y = cursorPosition.y;
+					Position New;
+					// PAWN
+					if (board[x + y * nBoardWidth] == 'p')
+					{
+						// Top Row : TODO - Choose piece to switch
+						if (y == 7)
+							break;
+
+						// 1 row
+						New = { x, y + 1 };
+						if (board[New.x + New.y * nBoardWidth] == ' ')
+							PiecePlacement.push_back(New);
+
+						// 2 rows
+						New = { x, y + 2 };
+						if (y == 1 && board[x + (y + 1) * nBoardWidth] == ' ')
+							PiecePlacement.push_back(New);
+
+						// Diagonal
+						New = { x + 1 , y + 1 };
+						if (IsWhitePiece(New))
+							PiecePlacement.push_back(New);
+						New = { x - 1 , y + 1 };
+						if (IsWhitePiece(New))
+							PiecePlacement.push_back(New);
+
+						break;
+					}
+					// KNIGHT
+					if (board[x + y * nBoardWidth] == 'n')
+					{
+						for (int X = -2; X < 3; X++)
+						{
+							for (int Y = -2; Y < 3; Y++)
+							{
+								if (abs(X) + abs(Y) == 3)
+								{
+									New.x = x + X; New.y = y + Y;
+									if (InGameBounds(New))
+										if (board[New.x + New.y * nBoardWidth] == ' ' || IsWhitePiece(New))
+											PiecePlacement.push_back(New);
+								}
+							}
+						}
+						break;
+					}
+					// BISHOP
+					if (board[x + y * nBoardWidth] == 'b')
+					{
+						// NE
+						bool hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x + 1, New.y - 1 };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
 								hitPiece = true;
 						}
-						else
-							hitPiece = true;
+						// SE
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x + 1, New.y + 1 };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// SW
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x - 1, New.y + 1 };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// NW
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x - 1, New.y - 1 };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						break;
 					}
+					// ROOK
+					if (board[x + y * nBoardWidth] == 'r')
+					{
+						// N
+						bool hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x, New.y - 1 };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// S
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x, New.y + 1 };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// E
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x + 1, New.y };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// W
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x - 1, New.y };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						break;
+						// Todo: Castling
+					}
+					// QUEEN
+					if (board[x + y * nBoardWidth] == 'q')
+					{
+						// N
+						bool hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x, New.y - 1 };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// S
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x, New.y + 1 };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// E
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x + 1, New.y };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// W
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x - 1, New.y };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
 
-					break;
+						// NE
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x + 1, New.y - 1 };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// SE
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x + 1, New.y + 1 };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// SW
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x - 1, New.y + 1 };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+						// NW
+						hitPiece = false;
+						New = cursorPosition;
+						while (!hitPiece)
+						{
+							New = { New.x - 1, New.y - 1 };
+							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
+							{
+								PiecePlacement.push_back(New);
+								if (IsWhitePiece(New))
+									hitPiece = true;
+							}
+							else
+								hitPiece = true;
+						}
+
+						break;
+					}
+					// KING
+					if (board[x + y * nBoardWidth] == 'k')
+					{
+						// N
+						New = cursorPosition;
+						New = { New.x, New.y - 1 };
+						if (!IsBlackPiece(New) && InGameBounds(New))
+							PiecePlacement.push_back(New);
+						// S
+						New = cursorPosition;
+						New = { New.x, New.y + 1 };
+						if (!IsBlackPiece(New) && InGameBounds(New))
+							PiecePlacement.push_back(New);
+						// E
+						New = cursorPosition;
+						New = { New.x + 1, New.y };
+						if (!IsBlackPiece(New) && InGameBounds(New))
+							PiecePlacement.push_back(New);
+						// W
+						New = cursorPosition;
+						New = { New.x - 1, New.y };
+						if (!IsBlackPiece(New) && InGameBounds(New))
+							PiecePlacement.push_back(New);
+
+						// NE
+						New = cursorPosition;
+						New = { New.x + 1, New.y - 1 };
+						if (!IsBlackPiece(New) && InGameBounds(New))
+							PiecePlacement.push_back(New);
+						// SE
+						New = cursorPosition;
+						New = { New.x + 1, New.y + 1 };
+						if (!IsBlackPiece(New) && InGameBounds(New))
+							PiecePlacement.push_back(New);
+						// SW
+						New = cursorPosition;
+						New = { New.x - 1, New.y + 1 };
+						if (!IsBlackPiece(New) && InGameBounds(New))
+							PiecePlacement.push_back(New);
+						// NW
+						New = cursorPosition;
+						New = { New.x - 1, New.y - 1 };
+						if (!IsBlackPiece(New) && InGameBounds(New))
+							PiecePlacement.push_back(New);
+
+						break;
+					}
 				}
-				// KING
-				if (board[x + y * nBoardWidth] == 'K')
+
+			case(PLACE_PIECE):
+				if (spaceBarReleased)
 				{
-					// N
-					New = cursorPosition;
-					New = { New.x, New.y - 1 };
-					if (!IsWhitePiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-					// S
-					New = cursorPosition;
-					New = { New.x, New.y + 1 };
-					if (!IsWhitePiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-					// E
-					New = cursorPosition;
-					New = { New.x + 1, New.y };
-					if (!IsWhitePiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-					// W
-					New = cursorPosition;
-					New = { New.x - 1, New.y };
-					if (!IsWhitePiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
+					int x = cursorPosition.x, y = cursorPosition.y;
+					Position New = { x, y };
+					bool isPiecePlaced = false;
+					for (auto& place : PiecePlacement)
+					{
+						if (place.x == x && place.y == y)
+						{
+							if (IsBlackPiece(place))
+								CapturedP1.push_back(board[x + y * nBoardWidth]);
+							if (IsWhitePiece(place))
+								CapturedP2.push_back(board[x + y * nBoardWidth]);
 
-					// NE
-					New = cursorPosition;
-					New = { New.x + 1, New.y - 1 };
-					if (!IsWhitePiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-					// SE
-					New = cursorPosition;
-					New = { New.x + 1, New.y + 1 };
-					if (!IsWhitePiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-					// SW
-					New = cursorPosition;
-					New = { New.x - 1, New.y + 1 };
-					if (!IsWhitePiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-					// NW
-					New = cursorPosition;
-					New = { New.x - 1, New.y - 1 };
-					if (!IsWhitePiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-
-					break;
+							board[x + y * nBoardWidth] = board[selectedPiecePosition.x + selectedPiecePosition.y * nBoardWidth];
+							board[selectedPiecePosition.x + selectedPiecePosition.y * nBoardWidth] = ' ';
+							PiecePlacement.clear();
+							nGamePhase = CHOOSE_PIECE;
+							nTurn++;
+							cursorPosition = { 0, (nTurn % 2 == 0) ? 0 : 7 };
+							isPiecePlaced = true;
+							break;
+						}
+					}
+					if (!isPiecePlaced)
+					{
+						PiecePlacement.clear();
+						nGamePhase = CHOOSE_PIECE;
+					}
 				}
+			}
+
+			// Clear Screen
+			ClearScreen(screen);
+
+			// Draw Borders
+			for (int y = 0; y < nScreenHeight; y++)
+			{
+				for (int x = 0; x < nScreenWidth; x++)
+				{
+					if (y == 0 || y == 3 || y == nScreenHeight - 1)
+						screen[x + y * nScreenWidth] = L'.';
+					if ((x == 0 || x == nScreenWidth - 1) && y > 0)
+						screen[x + y * nScreenWidth] = L':';
+				}
+			}
+
+			// Write name of the game and turn
+			const wstring sNameOfGame = L"ASCII Chess";
+			wstring sTurn = L"Turn: " + to_wstring(nTurn);
+			for (int i = 0; i < sNameOfGame.length(); i++)
+				screen[nScreenWidth + i + (nScreenWidth - sNameOfGame.length()) / 2] = sNameOfGame[i];
+			for (int i = 0; i < sTurn.length(); i++)
+				screen[2 * nScreenWidth + i + (nScreenWidth - sTurn.length()) / 2] = sTurn[i];
+
+
+			// Write Players names and mark player's turn
+			for (int i = 0; i < sPlayer1.length(); i++)
+				screen[nScreenWidth + i + 3] = sPlayer1[i];
+
+			for (int i = 0; i < sPlayer2.length(); i++)
+				screen[2 * nScreenWidth - sPlayer2.length() - 3 + i] = sPlayer2[i];
+
+			if (nTurn % 2 == 1)
+			{
+				screen[nScreenWidth + 2] = L'*';
+				screen[nScreenWidth + sPlayer1.length() + 3] = L'*';
 			}
 
 			if (nTurn % 2 == 0)
 			{
-				int x = cursorPosition.x, y = cursorPosition.y;
-				Position New;
-				// PAWN
-				if (board[x + y * nBoardWidth] == 'p')
-				{
-					// Top Row : TODO - Choose piece to switch
-					if (y == 7)
-						break;
-
-					// 1 row
-					New = { x, y + 1 };
-					if (board[New.x + New.y * nBoardWidth] == ' ')
-						PiecePlacement.push_back(New);
-
-					// 2 rows
-					New = { x, y + 2 };
-					if (y == 1 && board[x + (y + 1) * nBoardWidth] == ' ')
-						PiecePlacement.push_back(New);
-
-					// Diagonal
-					New = { x + 1 , y + 1 };
-					if (IsWhitePiece(New))
-						PiecePlacement.push_back(New);
-					New = { x - 1 , y + 1 };
-					if (IsWhitePiece(New))
-						PiecePlacement.push_back(New);
-
-					break;
-				}
-				// KNIGHT
-				if (board[x + y * nBoardWidth] == 'n')
-				{
-					for (int X = -2; X < 3; X++)
-					{
-						for (int Y = -2; Y < 3; Y++)
-						{
-							if (abs(X) + abs(Y) == 3)
-							{
-								New.x = x + X; New.y = y + Y;
-								if (InGameBounds(New))
-									if (board[New.x + New.y * nBoardWidth] == ' ' || IsWhitePiece(New))
-										PiecePlacement.push_back(New);
-							}
-						}
-					}
-					break;
-				}
-				// BISHOP
-				if (board[x + y * nBoardWidth] == 'b')
-				{
-					// NE
-					bool hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x + 1, New.y - 1 };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// SE
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x + 1, New.y + 1 };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// SW
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x - 1, New.y + 1 };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// NW
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x - 1, New.y - 1 };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					break;
-				}
-				// ROOK
-				if (board[x + y * nBoardWidth] == 'r')
-				{
-					// N
-					bool hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x, New.y - 1 };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// S
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x, New.y + 1 };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// E
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x + 1, New.y };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// W
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x - 1, New.y };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					break;
-					// Todo: Castling
-				}
-				// QUEEN
-				if (board[x + y * nBoardWidth] == 'q')
-				{
-					// N
-					bool hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x, New.y - 1 };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// S
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x, New.y + 1 };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// E
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x + 1, New.y };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// W
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x - 1, New.y };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-
-					// NE
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x + 1, New.y - 1 };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// SE
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x + 1, New.y + 1 };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// SW
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x - 1, New.y + 1 };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-					// NW
-					hitPiece = false;
-					New = cursorPosition;
-					while (!hitPiece)
-					{
-						New = { New.x - 1, New.y - 1 };
-						if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-						{
-							PiecePlacement.push_back(New);
-							if (IsWhitePiece(New))
-								hitPiece = true;
-						}
-						else
-							hitPiece = true;
-					}
-
-					break;
-				}
-				// KING
-				if (board[x + y * nBoardWidth] == 'k')
-				{
-					// N
-					New = cursorPosition;
-					New = { New.x, New.y - 1 };
-					if (!IsBlackPiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-					// S
-					New = cursorPosition;
-					New = { New.x, New.y + 1 };
-					if (!IsBlackPiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-					// E
-					New = cursorPosition;
-					New = { New.x + 1, New.y };
-					if (!IsBlackPiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-					// W
-					New = cursorPosition;
-					New = { New.x - 1, New.y };
-					if (!IsBlackPiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-
-					// NE
-					New = cursorPosition;
-					New = { New.x + 1, New.y - 1 };
-					if (!IsBlackPiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-					// SE
-					New = cursorPosition;
-					New = { New.x + 1, New.y + 1 };
-					if (!IsBlackPiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-					// SW
-					New = cursorPosition;
-					New = { New.x - 1, New.y + 1 };
-					if (!IsBlackPiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-					// NW
-					New = cursorPosition;
-					New = { New.x - 1, New.y - 1 };
-					if (!IsBlackPiece(New) && InGameBounds(New))
-						PiecePlacement.push_back(New);
-
-					break;
-				}
+				screen[2 * nScreenWidth - 3] = L'*';
+				screen[2 * nScreenWidth - sPlayer2.length() - 4] = L'*';
 			}
 
-		case(PLACE_PIECE):
-			if (spaceBarReleased)
+			// Draw board grid
+			for (int y = 6; y < 23; y++)
 			{
-				int x = cursorPosition.x, y = cursorPosition.y;
-				Position New = { x, y };
-				bool isPiecePlaced = false;
-				for (auto& place : PiecePlacement)
+				for (int x = 31; x < nScreenWidth - 32; x++)
 				{
-					if (place.x == x && place.y == y)
-					{
-						if (IsBlackPiece(place))
-							CapturedP1.push_back(board[x + y * nBoardWidth]);
-						if (IsWhitePiece(place))
-							CapturedP2.push_back(board[x + y * nBoardWidth]);
-
-						board[x + y * nBoardWidth] = board[selectedPiecePosition.x + selectedPiecePosition.y * nBoardWidth];
-						board[selectedPiecePosition.x + selectedPiecePosition.y * nBoardWidth] = ' ';
-						PiecePlacement.clear();
-						nGamePhase = CHOOSE_PIECE;
-						nTurn++;
-						cursorPosition = { 0, (nTurn % 2 == 0) ? 0 : 7 };
-						isPiecePlaced = true;
-						break;
-					}
-				}
-				if (!isPiecePlaced)
-				{
-				PiecePlacement.clear();
-				nGamePhase = CHOOSE_PIECE;
+					if (x % 7 == 3)
+						screen[x + y * nScreenWidth] = L'|';
+					if (y % 2 == 0)
+						screen[x + y * nScreenWidth] = L'\u2014';
 				}
 			}
-		}
 
-		// Clear Screen
-		for (int i = 0; i < nScreenWidth * nScreenHeight; i++)
-			screen[i] = L' ';
-
-		// Draw Borders
-		for (int y = 0; y < nScreenHeight; y++)
-		{
-			for (int x = 0; x < nScreenWidth; x++)
+			// Draw pieces in the board
+			for (int y = 0; y < nBoardHeight; y++)
 			{
-				if(y == 0 || y == 3 || y == nScreenHeight - 1)
-					screen[x + y * nScreenWidth] = L'.';
-				if ((x == 0 || x == nScreenWidth - 1) && y > 0)
-					screen[x + y * nScreenWidth] = L':';
+				for (int x = 0; x < nBoardWidth; x++)
+				{
+					screen[(35 + 7 * x) + (7 + 2 * y) * nScreenWidth] = board[x + y * nBoardWidth];
+				}
 			}
-		}
 
-		// Write name of the game and turn
-		const wstring sNameOfGame = L"ASCII Chess";
-		wstring sTurn = L"Turn: " + to_wstring(nTurn);
-		for (int i = 0; i < sNameOfGame.length(); i++)
-			screen[nScreenWidth + i + (nScreenWidth - sNameOfGame.length()) / 2] = sNameOfGame[i];
-		for (int i = 0; i < sTurn.length(); i++)
-			screen[2 * nScreenWidth + i + (nScreenWidth - sTurn.length()) / 2] = sTurn[i];
+			// Draw piece placement
+			for (auto& pos : PiecePlacement)
+				screen[(34 + 7 * pos.x) + (7 + 2 * pos.y) * nScreenWidth] = L'#';
 
+			// Draw cursor
+			screen[(34 + 7 * cursorPosition.x) + (7 + 2 * cursorPosition.y) * nScreenWidth] = L'*';
 
-		// Write Players names and mark player's turn
-		for (int i = 0; i < sPlayer1.length(); i++)
-			screen[nScreenWidth + i + 3] = sPlayer1[i];
-
-		for (int i = 0; i < sPlayer2.length(); i++)
-			screen[2 * nScreenWidth - sPlayer2.length() - 3 + i] = sPlayer2[i];
-
-		if (nTurn % 2 == 1)
-		{
-			screen[nScreenWidth + 2] = L'*';
-			screen[nScreenWidth + sPlayer1.length() + 3] = L'*';
-		}
-
-		if (nTurn % 2 == 0)
-		{
-			screen[2 * nScreenWidth - 3] = L'*';
-			screen[2 * nScreenWidth - sPlayer2.length() - 4] = L'*';
-		}
-
-		// Draw board grid
-		for (int y = 6; y < 23; y++)
-		{
-			for (int x = 31; x < nScreenWidth - 32; x++)
+			// Draw captured pieces
+			int aux = 0;
+			for (auto& piece : CapturedP1)
 			{
-				if (x % 7 == 3)
-					screen[x + y * nScreenWidth] = L'|';
-				if (y % 2 == 0)
-					screen[x + y * nScreenWidth] = L'\u2014';
+				screen[2 * nScreenWidth + aux + 3] = piece;
+				if (piece == 'k')
+					GameOver(sPlayer1, screen);
+				aux++;
 			}
-		}
-
-		// Draw pieces in the board
-		for (int y = 0; y < nBoardHeight; y++)
-		{
-			for (int x = 0; x < nBoardWidth; x++)
+			aux = 0;
+			for (auto& piece : CapturedP2)
 			{
-				screen[(35 + 7 * x) + (7 + 2 * y) * nScreenWidth] = board[x + y * nBoardWidth];
+				screen[3 * nScreenWidth - CapturedP2.size() - 3 + aux] = piece;
+				if (piece == 'k')
+					GameOver(sPlayer2, screen);
+				aux++;
 			}
+
+			// Display Frame
+			vRefreshDisplay(screen);
+
+			while (!UpdateKeyPress());
 		}
-
-		// Draw piece placement
-		for (auto& pos : PiecePlacement)
-			screen[(34 + 7 * pos.x) + (7 + 2 * pos.y) * nScreenWidth] = L'#';
-
-		// Draw cursor
-		screen[(34 + 7 * cursorPosition.x) + (7 + 2 * cursorPosition.y) * nScreenWidth] = L'*';
-
-		// Draw captured pieces
-		int aux = 0;
-		for (auto& piece : CapturedP1)
-		{
-			screen[2 * nScreenWidth + aux + 3] = piece;
-			if (piece == 'k')
-				GameOver(sPlayer1, screen);
-			aux++;
-		}
-		aux = 0;
-		for (auto& piece : CapturedP2)
-		{
-			screen[3 * nScreenWidth - CapturedP2.size() - 3 + aux] = piece;
-			if (piece == 'k')
-				GameOver(sPlayer2, screen);
-			aux++;
-		}
-		
-		// Display Frame
-		vRefreshDisplay(screen);
-
-		while (!UpdateKeyPress());
 	}
 
 	return 0;
