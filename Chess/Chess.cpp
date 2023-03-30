@@ -8,7 +8,6 @@
 
 //#include "..\olcConsoleGameEngine.h"
 using namespace std;
-
 // enums
 enum boardColumn {
 	a = 1, b, c, d, e, f, g, h
