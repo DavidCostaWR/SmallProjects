@@ -9,15 +9,18 @@
 //#include "..\olcConsoleGameEngine.h"
 using namespace std;
 
+// enums
 enum boardColumn {
 	a = 1, b, c, d, e, f, g, h
 };
 enum GamePhase {
-	CHOOSE_PIECE = 0, PLACE_PIECE, END_TURN
+	CHOOSE_PIECE = 0, CHOOSE_DESTINATION
 };
 
+// constants
 const int nScreenWidth = 120, nScreenHeight = 30;
 const int nBoardWidth = 8, nBoardHeight = 8;
+const int nWPawnStartRow = 6, nBPawnStartRow = 1;
 
 wchar_t *board = new wchar_t[nBoardWidth * nBoardHeight];
 wchar_t tempPiece;
@@ -102,6 +105,119 @@ void PlacePiece(wchar_t Piece, int x, int y)
 {
 	board[x - 1 + (y - 1) * nBoardWidth] = Piece;
 };
+
+void PawnMoves(Position cursorPos, list<Position>& moves, int nIsWhite)
+{
+	int x = cursorPos.x;
+	int y = cursorPos.y;
+
+	if (cursorPos.y == (nIsWhite ? 0 : nBoardHeight - 1))
+	{
+		// Choose piece
+		return;
+	}
+
+	y += nIsWhite ? (-1) : 1;
+	if (board[x + y * nBoardWidth] == ' ')
+	{
+		moves.push_back({x,y});
+		y += nIsWhite ? (-1) : 1;
+		if ((cursorPos.y == nIsWhite ? nWPawnStartRow : nBPawnStartRow) && board[x + y * nBoardWidth] == ' ')
+			moves.push_back({x,y});
+	}
+
+	for (int dx = -1; dx <= 1; dx += 2)
+	{
+		int dy = nIsWhite ? (-1) : 1;
+		x = cursorPos.x + dx;
+		y = cursorPos.y + dy;
+		if(nIsWhite ? IsBlackPiece({x,y}) : IsWhitePiece({x,y}))
+			moves.push_back({ x,y });
+	}
+}
+
+void KnightMoves(Position cursorPos, list<Position>& moves, int nIsWhite)
+{
+	for (int dx = -2; dx <= 2; dx ++)
+	{
+		for (int dy = -2; dy <= 3; dy ++)
+		{
+			int x = cursorPos.x + dx;
+			int y = cursorPos.y + dy;
+			if (InGameBounds({ x,y }) && !(nIsWhite ? IsWhitePiece({ x,y }) : IsBlackPiece({ x,y })) && (abs(dx) + abs(dy) == 3))
+			{
+				moves.push_back({ x,y });
+			}
+		}
+	}
+}
+
+void BishopMoves(Position cursorPos, list<Position>& moves, int nIsWhite)
+{
+	for (int dx = -1; dx <= 1; dx += 2)
+	{
+		for (int dy = -1; dy <= 1; dy += 2)
+		{
+			int x = cursorPos.x + dx;
+			int y = cursorPos.y + dy;
+			while (InGameBounds({ x,y }) && !(nIsWhite ? IsWhitePiece({ x,y }) : IsBlackPiece({ x,y })))
+			{
+				moves.push_back({ x,y });
+				if (nIsWhite ? IsBlackPiece({ x,y }) : IsWhitePiece({ x,y }))
+					break;
+				x += dx;
+				y += dy;
+			}
+		}
+	}
+}
+
+void RookMoves(Position cursorPos, list<Position>& moves, int nIsWhite)
+{
+	for (int dx = -1; dx <= 1; dx += 2)
+	{
+		int x = cursorPos.x + dx;
+		int y = cursorPos.y;
+		while (InGameBounds({ x,y }) && !(nIsWhite ? IsWhitePiece({ x,y }) : IsBlackPiece({ x,y })))
+		{
+			moves.push_back({ x,y });
+			if (nIsWhite ? IsBlackPiece({ x,y }) : IsWhitePiece({ x,y }))
+				break;
+			x += dx;
+		}
+	}
+	for (int dy = -1; dy <= 1; dy += 2)
+	{
+		int x = cursorPos.x;
+		int y = cursorPos.y + dy;
+		while (InGameBounds({ x,y }) && !(nIsWhite ? IsWhitePiece({ x,y }) : IsBlackPiece({ x,y })))
+		{
+			moves.push_back({ x,y });
+			if (nIsWhite ? IsBlackPiece({ x,y }) : IsWhitePiece({ x,y }))
+				break;
+			y += dy;
+		}
+	}
+	//To Do: Check for castling
+}
+
+void KingMoves(Position cursorPos, list<Position>& moves, int nIsWhite)
+{
+	for (int dx = -1; dx <= 1; dx ++)
+	{
+		for (int dy = -1; dy <= 1; dy ++)
+		{
+			int x = cursorPos.x + dx;
+			int y = cursorPos.y + dy;
+			if (InGameBounds({ x,y }) && !(nIsWhite ? IsWhitePiece({ x,y }) : IsBlackPiece({ x,y })))
+			{
+				// Check if it's checkmate
+				moves.push_back({ x,y });
+			}
+		}
+	}
+	// To Do: Check for castling
+}
 
 void DrawBoard()
 {
@@ -288,6 +404,7 @@ int main()
 			switch (nGamePhase)
 			{
 			case(CHOOSE_PIECE):
+			{
 				if (spaceBarReleased)
 				{
 					if (nTurn % 2 == 1 && !IsWhitePiece(cursorPosition))
@@ -298,725 +415,81 @@ int main()
 					nGamePhase++;
 					break;
 				}
+				int x = cursorPosition.x, y = cursorPosition.y;
+				Position NewPos;
 				PiecePlacement.clear();
+				bool PieceMoved = false;
+				bool hitPiece = false;
 				if (nTurn % 2 == 1)
 				{
-					int x = cursorPosition.x, y = cursorPosition.y;
-					Position New;
-					bool PieceMoved = false;
+					switch (board[x + y * nBoardWidth])
+					{
 					// PAWN
-					if (board[x + y * nBoardWidth] == 'P')
-					{
-						// Top Row : TODO - Choose piece to switch
-						if (y == 0)
-							break;
-
-						// 1 row
-						New = { x, y - 1 };
-						if (board[New.x + New.y * nBoardWidth] == ' ')
-							PiecePlacement.push_back(New);
-
-						// 2 rows
-						New = { x, y - 2 };
-						if (y == 6 && board[x + (y - 1) * nBoardWidth] == ' ')
-							PiecePlacement.push_back(New);
-
-						// Diagonal
-						New = { x + 1 , y - 1 };
-						if (IsBlackPiece(New))
-							PiecePlacement.push_back(New);
-						New = { x - 1 , y - 1 };
-						if (IsBlackPiece(New))
-							PiecePlacement.push_back(New);
-
+					case 'P':
+						PawnMoves(cursorPosition, PiecePlacement, true);
 						break;
-					}
 					// KNIGHT
-					if (board[x + y * nBoardWidth] == 'N')
-					{
-						for (int X = -2; X < 3; X++)
-						{
-							for (int Y = -2; Y < 3; Y++)
-							{
-								if (abs(X) + abs(Y) == 3)
-								{
-									New.x = x + X; New.y = y + Y;
-									if (InGameBounds(New))
-										if (board[New.x + New.y * nBoardWidth] == ' ' || IsBlackPiece(New))
-											PiecePlacement.push_back(New);
-								}
-							}
-						}
+					case 'N':
+						KnightMoves(cursorPosition, PiecePlacement, true);
 						break;
-					}
 					// BISHOP
-					if (board[x + y * nBoardWidth] == 'B')
-					{
-						// NE
-						bool hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x + 1, New.y - 1 };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// SE
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x + 1, New.y + 1 };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// SW
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x - 1, New.y + 1 };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// NW
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x - 1, New.y - 1 };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
+					case 'B':
+						BishopMoves(cursorPosition, PiecePlacement, true);
 						break;
-					}
 					// ROOK
-					if (board[x + y * nBoardWidth] == 'R')
-					{
-						// N
-						bool hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x, New.y - 1 };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// S
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x, New.y + 1 };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// E
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x + 1, New.y };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// W
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x - 1, New.y };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
+					case 'R':
+						RookMoves(cursorPosition, PiecePlacement, true);
 						break;
-						// Todo: Castling
-					}
 					// QUEEN
-					if (board[x + y * nBoardWidth] == 'Q')
-					{
-						// N
-						bool hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x, New.y - 1 };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// S
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x, New.y + 1 };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// E
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x + 1, New.y };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// W
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x - 1, New.y };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-
-						// NE
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x + 1, New.y - 1 };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// SE
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x + 1, New.y + 1 };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// SW
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x - 1, New.y + 1 };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// NW
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x - 1, New.y - 1 };
-							if (!hitPiece && !IsWhitePiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsBlackPiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-
+					case 'Q':
+						BishopMoves(cursorPosition, PiecePlacement, true);
+						RookMoves(cursorPosition, PiecePlacement, true);
 						break;
-					}
 					// KING
-					if (board[x + y * nBoardWidth] == 'K')
-					{
-						// N
-						New = cursorPosition;
-						New = { New.x, New.y - 1 };
-						if (!IsWhitePiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-						// S
-						New = cursorPosition;
-						New = { New.x, New.y + 1 };
-						if (!IsWhitePiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-						// E
-						New = cursorPosition;
-						New = { New.x + 1, New.y };
-						if (!IsWhitePiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-						// W
-						New = cursorPosition;
-						New = { New.x - 1, New.y };
-						if (!IsWhitePiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-
-						// NE
-						New = cursorPosition;
-						New = { New.x + 1, New.y - 1 };
-						if (!IsWhitePiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-						// SE
-						New = cursorPosition;
-						New = { New.x + 1, New.y + 1 };
-						if (!IsWhitePiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-						// SW
-						New = cursorPosition;
-						New = { New.x - 1, New.y + 1 };
-						if (!IsWhitePiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-						// NW
-						New = cursorPosition;
-						New = { New.x - 1, New.y - 1 };
-						if (!IsWhitePiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-
+					case 'K':
+						KingMoves(cursorPosition, PiecePlacement, true);
 						break;
 					}
 				}
 
 				if (nTurn % 2 == 0)
 				{
-					int x = cursorPosition.x, y = cursorPosition.y;
-					Position New;
+					switch (board[x + y * nBoardWidth])
+					{
 					// PAWN
-					if (board[x + y * nBoardWidth] == 'p')
-					{
-						// Top Row : TODO - Choose piece to switch
-						if (y == 7)
-							break;
-
-						// 1 row
-						New = { x, y + 1 };
-						if (board[New.x + New.y * nBoardWidth] == ' ')
-							PiecePlacement.push_back(New);
-
-						// 2 rows
-						New = { x, y + 2 };
-						if (y == 1 && board[x + (y + 1) * nBoardWidth] == ' ')
-							PiecePlacement.push_back(New);
-
-						// Diagonal
-						New = { x + 1 , y + 1 };
-						if (IsWhitePiece(New))
-							PiecePlacement.push_back(New);
-						New = { x - 1 , y + 1 };
-						if (IsWhitePiece(New))
-							PiecePlacement.push_back(New);
-
+					case 'p':
+						PawnMoves(cursorPosition, PiecePlacement, false);
 						break;
-					}
 					// KNIGHT
-					if (board[x + y * nBoardWidth] == 'n')
-					{
-						for (int X = -2; X < 3; X++)
-						{
-							for (int Y = -2; Y < 3; Y++)
-							{
-								if (abs(X) + abs(Y) == 3)
-								{
-									New.x = x + X; New.y = y + Y;
-									if (InGameBounds(New))
-										if (board[New.x + New.y * nBoardWidth] == ' ' || IsWhitePiece(New))
-											PiecePlacement.push_back(New);
-								}
-							}
-						}
+					case 'n':
+						KnightMoves(cursorPosition, PiecePlacement, false);
 						break;
-					}
 					// BISHOP
-					if (board[x + y * nBoardWidth] == 'b')
-					{
-						// NE
-						bool hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x + 1, New.y - 1 };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// SE
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x + 1, New.y + 1 };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// SW
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x - 1, New.y + 1 };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// NW
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x - 1, New.y - 1 };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
+					case 'b':
+						BishopMoves(cursorPosition, PiecePlacement, false);
 						break;
-					}
 					// ROOK
-					if (board[x + y * nBoardWidth] == 'r')
-					{
-						// N
-						bool hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x, New.y - 1 };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// S
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x, New.y + 1 };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// E
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x + 1, New.y };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// W
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x - 1, New.y };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
+					case 'r':
+						RookMoves(cursorPosition, PiecePlacement, false);
 						break;
 						// Todo: Castling
-					}
 					// QUEEN
-					if (board[x + y * nBoardWidth] == 'q')
-					{
-						// N
-						bool hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x, New.y - 1 };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// S
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x, New.y + 1 };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// E
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x + 1, New.y };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// W
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x - 1, New.y };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-
-						// NE
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x + 1, New.y - 1 };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// SE
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x + 1, New.y + 1 };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// SW
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x - 1, New.y + 1 };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-						// NW
-						hitPiece = false;
-						New = cursorPosition;
-						while (!hitPiece)
-						{
-							New = { New.x - 1, New.y - 1 };
-							if (!hitPiece && !IsBlackPiece(New) && InGameBounds(New))
-							{
-								PiecePlacement.push_back(New);
-								if (IsWhitePiece(New))
-									hitPiece = true;
-							}
-							else
-								hitPiece = true;
-						}
-
+					case 'q':
+						BishopMoves(cursorPosition, PiecePlacement, false);
+						RookMoves(cursorPosition, PiecePlacement, false);
 						break;
-					}
 					// KING
-					if (board[x + y * nBoardWidth] == 'k')
-					{
-						// N
-						New = cursorPosition;
-						New = { New.x, New.y - 1 };
-						if (!IsBlackPiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-						// S
-						New = cursorPosition;
-						New = { New.x, New.y + 1 };
-						if (!IsBlackPiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-						// E
-						New = cursorPosition;
-						New = { New.x + 1, New.y };
-						if (!IsBlackPiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-						// W
-						New = cursorPosition;
-						New = { New.x - 1, New.y };
-						if (!IsBlackPiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-
-						// NE
-						New = cursorPosition;
-						New = { New.x + 1, New.y - 1 };
-						if (!IsBlackPiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-						// SE
-						New = cursorPosition;
-						New = { New.x + 1, New.y + 1 };
-						if (!IsBlackPiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-						// SW
-						New = cursorPosition;
-						New = { New.x - 1, New.y + 1 };
-						if (!IsBlackPiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-						// NW
-						New = cursorPosition;
-						New = { New.x - 1, New.y - 1 };
-						if (!IsBlackPiece(New) && InGameBounds(New))
-							PiecePlacement.push_back(New);
-
+					case 'k':
+						KingMoves(cursorPosition, PiecePlacement, false);
 						break;
 					}
 				}
+			}
 
-			case(PLACE_PIECE):
+			case(CHOOSE_DESTINATION):
 				if (spaceBarReleased)
 				{
 					int x = cursorPosition.x, y = cursorPosition.y;
-					Position New = { x, y };
 					bool isPiecePlaced = false;
 					for (auto& place : PiecePlacement)
 					{
