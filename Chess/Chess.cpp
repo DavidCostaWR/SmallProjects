@@ -24,7 +24,7 @@ const int nWPawnStartRow = 6, nBPawnStartRow = 1;
 wchar_t *board = new wchar_t[nBoardWidth * nBoardHeight];
 wchar_t tempPiece;
 
-int nTurn = 1, nGamePhase = CHOOSE_PIECE;
+int nTurn, nGamePhase = CHOOSE_PIECE;
 bool bGame, prevLeftArrowState, prevRightArrowState, prevUpArrowState, prevDownArrowState, prevSpaceBarState;
 
 bool leftArrowReleased = false;
@@ -32,9 +32,6 @@ bool rightArrowReleased = false;
 bool upArrowReleased = false;
 bool downArrowReleased = false;
 bool spaceBarReleased = false;
-
-string sPlayer1;
-string sPlayer2;
 
 struct Position { int x = 0; int y = 0;};
 
@@ -45,10 +42,8 @@ list<wchar_t> CapturedP2;
 Position cursorPosition = { 0, 7 };
 Position selectedPiecePosition;
 
-
-void vRefreshDisplay(wchar_t* screen)
+void vRefreshDisplay(wchar_t* screen, HANDLE hConsole)
 {
-	HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 	SetConsoleActiveScreenBuffer(hConsole);
 	DWORD dwBytesWritten = 0;
 
@@ -377,15 +372,16 @@ int main()
 		wchar_t* screen = new wchar_t[nScreenWidth * nScreenHeight];
 		screen[nScreenWidth * nScreenHeight - 1] = '\0';
 
-	while(true)
-	{
-		ClearBoard();
-		vRefreshDisplay(screen);
+		// Create console screen buffer
+		HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+
 		// Collect player names and randomize order
+		string sPlayer1, sPlayer2;
 		cout << "Player 1: ";
-		cin >> sPlayer1;
+		getline(cin, sPlayer1);
 		cout << "Player 2: ";
-		cin >> sPlayer2;
+		getline(cin, sPlayer2);
+
 		if (rand() % 2 == 1)
 		{
 			string temp = sPlayer1;
@@ -393,8 +389,16 @@ int main()
 			sPlayer2 = temp;
 		}
 
+	while(true)
+	{
 		ResetBoard();
 		bGame = true;
+		nTurn = 1;
+
+		// Change order of players
+		string temp = sPlayer1;
+		sPlayer1 = sPlayer2;
+		sPlayer2 = temp;
 
 		while (bGame)
 		{
@@ -586,7 +590,7 @@ int main()
 				screen[(34 + 7 * pos.x) + (7 + 2 * pos.y) * nScreenWidth] = L'#';
 
 			// Draw cursor
-			screen[(34 + 7 * cursorPosition.x) + (7 + 2 * cursorPosition.y) * nScreenWidth] = L'*';
+			screen[(34 + 7 * cursorPosition.x) + (7 + 2 * cursorPosition.y) * nScreenWidth] = L'\u259F';
 
 			// Draw captured pieces
 			int aux = 0;
@@ -607,7 +611,7 @@ int main()
 			}
 
 			// Display Frame
-			vRefreshDisplay(screen);
+			vRefreshDisplay(screen, hConsole);
 
 			while (!UpdateKeyPress());
 		}
