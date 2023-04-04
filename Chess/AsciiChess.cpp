@@ -1,6 +1,46 @@
-#include "pieces.h"
+﻿#include <iostream>
+#include <vector>
+#include <Windows.h>
+#include <stdio.h>
+#include <time.h>
+#include <string>
+#include <list>
 
+//#include "..\olcConsoleGameEngine.h"
 using namespace std;
+// enums
+enum boardColumn {
+	a = 1, b, c, d, e, f, g, h
+};
+enum GamePhase {
+	CHOOSE_PIECE = 0, CHOOSE_DESTINATION
+};
+
+// constants
+const int nScreenWidth = 120, nScreenHeight = 30;
+const int nBoardWidth = 8, nBoardHeight = 8;
+const int nWPawnStartRow = 6, nBPawnStartRow = 1;
+
+wchar_t *board = new wchar_t[nBoardWidth * nBoardHeight];
+wchar_t tempPiece;
+
+int nTurn, nGamePhase = CHOOSE_PIECE;
+bool bGame, prevLeftArrowState, prevRightArrowState, prevUpArrowState, prevDownArrowState, prevSpaceBarState;
+
+bool leftArrowReleased = false;
+bool rightArrowReleased = false;
+bool upArrowReleased = false;
+bool downArrowReleased = false;
+bool spaceBarReleased = false;
+
+struct Position { int x = 0; int y = 0;};
+
+list<Position> PiecePlacement;
+list<wchar_t> CapturedP1;
+list<wchar_t> CapturedP2;
+
+Position cursorPosition = { 0, 7 };
+Position selectedPiecePosition;
 
 void vRefreshDisplay(wchar_t* screen, HANDLE hConsole)
 {
@@ -8,6 +48,36 @@ void vRefreshDisplay(wchar_t* screen, HANDLE hConsole)
 	DWORD dwBytesWritten = 0;
 
 	WriteConsoleOutputCharacter(hConsole, screen, nScreenWidth * nScreenHeight, { 0, 0 }, &dwBytesWritten);
+}
+
+bool InGameBounds(Position P)
+{
+	return (P.x >= 0 && P.x < nBoardWidth && P.y >= 0 && P.y < nBoardHeight);
+}
+
+bool IsBlackPiece(Position P)
+{
+	if (P.x >= 0 && P.x < nBoardWidth && P.y >= 0 && P.y < nBoardHeight)
+	{
+		wchar_t piece = board[P.x + P.y * nBoardWidth];
+		return (piece == 'p' || piece == 'n' || piece == 'b' || piece == 'r' || piece == 'q' || piece == 'k');
+	}
+	return false;
+}
+
+bool IsWhitePiece(Position P)
+{
+	if (P.x >= 0 && P.x < nBoardWidth && P.y >= 0 && P.y < nBoardHeight)
+	{
+		wchar_t piece = board[P.x + P.y * nBoardWidth];
+		return (piece == 'P' || piece == 'N' || piece == 'B' || piece == 'R' || piece == 'Q' || piece == 'K');
+	}
+	return false;
+}
+
+bool IsBlankSpace(Position P)
+{
+	return (board[P.x + P.y * nBoardWidth] == ' ');
 }
 
 void ClearBoard()
@@ -64,7 +134,7 @@ void KnightMoves(Position cursorPos, list<Position>& moves, int nIsWhite)
 {
 	for (int dx = -2; dx <= 2; dx ++)
 	{
-		for (int dy = -2; dy <= 2; dy ++)
+		for (int dy = -2; dy <= 3; dy ++)
 		{
 			int x = cursorPos.x + dx;
 			int y = cursorPos.y + dy;
@@ -516,9 +586,8 @@ int main()
 			}
 
 			// Draw piece placement
-			for (auto& pos : PiecePlacement) {
+			for (auto& pos : PiecePlacement)
 				screen[(34 + 7 * pos.x) + (7 + 2 * pos.y) * nScreenWidth] = L'#';
-			}
 
 			// Draw cursor
 			screen[(34 + 7 * cursorPosition.x) + (7 + 2 * cursorPosition.y) * nScreenWidth] = L'\u259F';

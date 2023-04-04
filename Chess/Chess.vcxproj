@@ -128,10 +128,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Chess.cpp" />
+    <ClInclude Include="..\olcConsoleGameEngine.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\olcConsoleGameEngine.h" />
+    <ClCompile Include="AsciiChess.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
