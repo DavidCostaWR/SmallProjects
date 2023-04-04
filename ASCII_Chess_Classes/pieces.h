@@ -9,6 +9,8 @@ public:
 	~Piece(); // destructor
 
 	bool bIsWhite;
+	Position pPos;
+	bool bIsAlive = true;
 
 	virtual bool isValidMove(Position from, Position to) = 0;
 	virtual wchar_t getSymbol() = 0;

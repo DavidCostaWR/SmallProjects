@@ -12,7 +12,8 @@ Piece::~Piece(){
 // ************ KING
 
 King::King(bool isWhite, Position pos){
-    // King constructor implementation
+    bIsWhite = isWhite;
+    pPos = pos;
 }
 
 King::~King(){
@@ -25,13 +26,14 @@ bool King::isValidMove(Position from, Position to) {
 }
 
 wchar_t King::getSymbol() {
-    return bIsWhite ? 'K' : 'k';
+    return 'K';
 }
 
 // ************ QUEEN
 
 Queen::Queen(bool isWhite, Position pos) {
-    // Queen constructor implementation
+    bIsWhite = isWhite;
+    pPos = pos;
 }
 
 Queen::~Queen() {
@@ -44,13 +46,14 @@ bool Queen::isValidMove(Position from, Position to) {
 }
 
 wchar_t Queen::getSymbol() {
-    return bIsWhite ? 'Q' : 'q';
+    return 'Q';
 }
 
 // ************ ROOK
 
 Rook::Rook(bool isWhite, Position pos) {
-    // Rook destructor implementation
+    bIsWhite = isWhite;
+    pPos = pos;
 }
 
 Rook::~Rook() {
@@ -63,13 +66,14 @@ bool Rook::isValidMove(Position from, Position to) {
 };
 
 wchar_t Rook::getSymbol() {
-    return bIsWhite ? 'R' : 'r';
+    return 'R';
 }
 
 // ************ KNIGH
 
 Knight::Knight(bool isWhite, Position pos) {
-    // Knight destructor implementation
+    bIsWhite = isWhite;
+    pPos = pos;
 }
 
 Knight::~Knight() {
@@ -82,13 +86,14 @@ bool Knight::isValidMove(Position from, Position to) {
 };
 
 wchar_t Knight::getSymbol() {
-    return bIsWhite ? 'N' : 'n';
+    return 'N';
 }
 
 // ************ BISHOP
 
 Bishop::Bishop(bool isWhite, Position pos) {
-    // Bishop destructor implementation
+    bIsWhite = isWhite;
+    pPos = pos;
 }
 
 Bishop::~Bishop() {
@@ -101,13 +106,14 @@ bool Bishop::isValidMove(Position from, Position to) {
 };
 
 wchar_t Bishop::getSymbol() {
-    return bIsWhite ? 'B' : 'b';
+    return 'B';
 }
 
 // ************ PAWN
 
 Pawn::Pawn(bool isWhite, Position pos) {
-    // Pawn destructor implementation
+    bIsWhite = isWhite;
+    pPos = pos;
 }
 
 Pawn::~Pawn() {
@@ -120,5 +126,5 @@ bool Pawn::isValidMove(Position from, Position to) {
 };
 
 wchar_t Pawn::getSymbol() {
-    return bIsWhite ? 'P' : 'p';
+    return 'P';
 }
