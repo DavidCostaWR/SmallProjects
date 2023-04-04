@@ -64,7 +64,7 @@ void KnightMoves(Position cursorPos, list<Position>& moves, int nIsWhite)
 {
 	for (int dx = -2; dx <= 2; dx ++)
 	{
-		for (int dy = -2; dy <= 3; dy ++)
+		for (int dy = -2; dy <= 2; dy ++)
 		{
 			int x = cursorPos.x + dx;
 			int y = cursorPos.y + dy;
