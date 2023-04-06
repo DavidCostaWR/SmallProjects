@@ -12,14 +12,14 @@ public:
     Board();
     ~Board();
 
-    void printBoard(HANDLE hConsole);
+    void printBoard();
     Piece* getPiece(Position pos);
     void setPiece(Position pos, Piece* piece);
     void updateBoard();
+    std::vector<Piece*> alivePieces;
 
 private:
     Piece* board[HEIGHT * WIDTH];
-    std::vector<Piece*> alivePieces;
 };
 
 #endif // BOARD_H

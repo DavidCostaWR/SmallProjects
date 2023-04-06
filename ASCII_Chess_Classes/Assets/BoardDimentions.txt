@@ -1,0 +1,10 @@
+Board = 700*700 px
+Frame thickness = 64
+Square len = 71,5
+
+
+PieceMap = 156 x 92  	| 780 x 460
+Piece = 26 X 46		| 130 x 230
+
+Y White, Black 
+X King, Queen, Rook, Knight, Bishop, Pawn

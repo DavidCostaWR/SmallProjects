@@ -1,19 +1,34 @@
 #include "Pieces.h"
-#include "Position.h"
+//#include "PGE_Chess.h"
+
+//PGE_Chess* Piece::g_engine = nullptr;
 
 Piece::Piece(){
     // Default constructor implementation
+    bIsAlive = true;
 }
 
 Piece::~Piece(){
     // Destructor implementation
 }
 
+//void Piece::DrawSelf(olc::PixelGameEngine* gfx) {
+    //olc::vf2d boardFrame = { 64 + 15, 64 - 2.5 };
+    //float squareSize = 71.5f;
+    //olc::vf2d pieceSize = { 26,46 };
+    //olc::vf2d scale = { 1.5f, 1.5f };
+
+    //olc::vf2d boardPosition = { boardFrame.x + (float)pPos.x * squareSize,boardFrame.y + (float)pPos.y * squareSize };
+    //olc::vf2d sourcePos = { pieceSize.x * nPieceType, pieceSize.y * (!bIsWhite) };
+
+    //g_engine->DrawPartialDecal(boardPosition, g_engine->m_mapDecals["pieces"], sourcePos, pieceSize, scale);
+//}
 // ************ KING
 
 King::King(bool isWhite, Position pos){
     bIsWhite = isWhite;
     pPos = pos;
+    nPieceType = KING;
 }
 
 King::~King(){
@@ -34,6 +49,7 @@ wchar_t King::getSymbol() {
 Queen::Queen(bool isWhite, Position pos) {
     bIsWhite = isWhite;
     pPos = pos;
+    nPieceType = QUEEN;
 }
 
 Queen::~Queen() {
@@ -54,6 +70,7 @@ wchar_t Queen::getSymbol() {
 Rook::Rook(bool isWhite, Position pos) {
     bIsWhite = isWhite;
     pPos = pos;
+    nPieceType = ROOK;
 }
 
 Rook::~Rook() {
@@ -74,6 +91,7 @@ wchar_t Rook::getSymbol() {
 Knight::Knight(bool isWhite, Position pos) {
     bIsWhite = isWhite;
     pPos = pos;
+    nPieceType = KNIGHT;
 }
 
 Knight::~Knight() {
@@ -94,6 +112,7 @@ wchar_t Knight::getSymbol() {
 Bishop::Bishop(bool isWhite, Position pos) {
     bIsWhite = isWhite;
     pPos = pos;
+    nPieceType = BISHOP;
 }
 
 Bishop::~Bishop() {
@@ -114,6 +133,7 @@ wchar_t Bishop::getSymbol() {
 Pawn::Pawn(bool isWhite, Position pos) {
     bIsWhite = isWhite;
     pPos = pos;
+    nPieceType = PAWN;
 }
 
 Pawn::~Pawn() {

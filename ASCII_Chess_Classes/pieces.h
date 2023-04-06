@@ -1,6 +1,9 @@
 #ifndef PIECES_H
 #define PIECES_H
 #include "Position.h"
+//#include "../olcPixelGameEngine.h"
+
+//class PGE_Chess;
 
 class Piece
 {
@@ -8,12 +11,20 @@ public:
 	Piece(); // constructor
 	~Piece(); // destructor
 
-	bool bIsWhite;
+public:
+	int nPieceType;
+	bool bIsWhite, bIsAlive;
 	Position pPos;
-	bool bIsAlive = true;
 
+	enum PIECE_TYPE { KING, QUEEN, ROOK, KNIGHT, BISHOP, PAWN };
+
+
+public:
 	virtual bool isValidMove(Position from, Position to) = 0;
 	virtual wchar_t getSymbol() = 0;
+	//void DrawSelf(olc::PixelGameEngine* gfx);
+
+	//static PGE_Chess* g_engine;
 };
 
 class King : public Piece
