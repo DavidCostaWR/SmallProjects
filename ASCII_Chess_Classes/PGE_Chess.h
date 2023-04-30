@@ -9,6 +9,7 @@
 #include "Board.h"
 #include <vector>
 #include <iostream>
+#include <algorithm>
 
 class Board;
 class Piece;

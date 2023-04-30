@@ -203,19 +203,24 @@ bool PGE_Chess::InGameBounds(int x, int y) {
 	return x >= 0 && x < board->COLUMNS && y >= 0 && y < board->ROWS;
 }
 
-bool PGE_Chess::EndGame(float fElapsedTime) {
-	DrawDecal({ nBoardOffsetX, nBoardOffsetY }, m_mapDecals["board"], { fScaleToScreen , fScaleToScreen });
+bool PGE_Chess::EndGame(float fElapsedTime){
+	DrawDecal({ nBoardOffsetX, nBoardOffsetY }, m_mapDecals["board"], { fScaleToScreen , fScaleToScreen }, olc::Pixel(255, 255, 255, 127));
 	const std::string endGameMessage[2] = { "Press SPACE for NEW GAME", "Press ESC to EXIT" };
 	olc::vf2d fCharScale = { 2.0f, 2.0f };
 	olc::vf2d fCharDim = { 8.0f * fCharScale.x, 8.0f * fCharScale.y };
 
-	for (int i = 0; i < std::size(endGameMessage); i++)
-		DrawStringDecal({ ScreenWidth() / 2 - endGameMessage[i].length() * fCharDim.x / 2, 
-			(ScreenHeight() - std::size(endGameMessage) * (fCharDim.y + 5)) / 2 + i * (fCharDim.y + 5)},
-			endGameMessage[i], 
-			olc::VERY_DARK_GREEN, 
-			fCharScale);
+	for (int i = 0; i < std::size(endGameMessage); i++) {
 
+		FillRectDecal({ ScreenWidth() / 2 - endGameMessage[i].length() * fCharDim.x / 2 - 5,
+			(ScreenHeight() - std::size(endGameMessage) * (fCharDim.y + 5)) / 2 + i * (fCharDim.y + 5) - 5},
+			{ endGameMessage[i].length() * fCharDim.x + 10, fCharDim.y + 10},
+			olc::Pixel(255,255,255,100));
+		DrawStringDecal({ ScreenWidth() / 2 - endGameMessage[i].length() * fCharDim.x / 2,
+			(ScreenHeight() - std::size(endGameMessage) * (fCharDim.y + 5)) / 2 + i * (fCharDim.y + 5) },
+			endGameMessage[i],
+			olc::VERY_DARK_GREEN,
+			fCharScale);
+	}
 	if (GetKey(olc::Key::SPACE).bReleased) {
 		// Initializations
 		turn = 1;
