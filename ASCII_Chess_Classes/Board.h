@@ -1,25 +1,34 @@
+#pragma once
+
 #ifndef BOARD_H
 #define BOARD_H
+
+#include "Pieces.h"
+
 #include <vector>
 #include <Windows.h>
-#include "Position.h"
-#include "Pieces.h"
+
+class Piece;
+class PGE_Chess;
 
 class Board {
 public:
-    static const int WIDTH = 8, HEIGHT = 8;
+    static const int COLUMNS = 8, ROWS = 8;
+    std::vector<Piece*> alivePieces;
+    static PGE_Chess* g_engine;
 
+public:
     Board();
     ~Board();
 
+    Piece* getPiece(olc::vi2d pos);
     void printBoard();
-    Piece* getPiece(Position pos);
-    void setPiece(Position pos, Piece* piece);
+    bool isMoveLegal(Piece* activePiece, olc::vi2d pos);
+    bool removePiece(Piece* pieceToRemove);
     void updateBoard();
-    std::vector<Piece*> alivePieces;
 
 private:
-    Piece* board[HEIGHT * WIDTH];
+    Piece* board[COLUMNS * ROWS];
 };
 
 #endif // BOARD_H

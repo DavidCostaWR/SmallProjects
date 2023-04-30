@@ -1,9 +1,13 @@
+#pragma once
+
 #ifndef PIECES_H
 #define PIECES_H
-#include "Position.h"
-//#include "../olcPixelGameEngine.h"
 
-//class PGE_Chess;
+#include "Position.h"
+#include "PGE_Chess.h"
+#include <list>
+
+class PGE_Chess;
 
 class Piece
 {
@@ -13,78 +17,81 @@ public:
 
 public:
 	int nPieceType;
-	bool bIsWhite, bIsAlive;
-	Position pPos;
+	bool bIsWhite, bIsAlive, bSelected;
+	olc::vf2d pPos;
+	const olc::vf2d pieceSize = { 130,230 };
+	//olc::vf2d scale = { 1.5f, 1.5f };
+	std::list<olc::vi2d> nMoves;
 
 	enum PIECE_TYPE { KING, QUEEN, ROOK, KNIGHT, BISHOP, PAWN };
 
 
 public:
-	virtual bool isValidMove(Position from, Position to) = 0;
-	virtual wchar_t getSymbol() = 0;
-	//void DrawSelf(olc::PixelGameEngine* gfx);
+	virtual bool isValidMove(olc::vf2d from, olc::vf2d to) = 0;
+	virtual bool getMoves() = 0;
+	void DrawPiece(olc::vf2d scale, int Phase, olc::vf2d mousePos, olc::vi2d boardPos);
 
-	//static PGE_Chess* g_engine;
+	static PGE_Chess* g_engine;
 };
 
 class King : public Piece
 {
 public:
-	King(bool isWhite, Position pos); // constructor
+	King(bool isWhite, olc::vf2d pos); // constructor
 	~King(); // destructor
 
-	bool isValidMove(Position from, Position to) override;
-	wchar_t getSymbol() override;
+	bool isValidMove(olc::vf2d from, olc::vf2d to) override;
+	bool getMoves() override;
 };
 
 class Queen : public Piece
 {
 public:
-	Queen(bool isWhite, Position pos); // constructor
+	Queen(bool isWhite, olc::vf2d pos); // constructor
 	~Queen(); // destructor
 
-	bool isValidMove(Position from, Position to) override;
-	wchar_t getSymbol() override;
+	bool isValidMove(olc::vf2d from, olc::vf2d to) override;
+	bool getMoves() override;
 };
 
 class Rook : public Piece
 {
 public:
-	Rook(bool isWhite, Position pos); // constructor
+	Rook(bool isWhite, olc::vf2d pos); // constructor
 	~Rook(); // destructor
 
-	bool isValidMove(Position from, Position to) override;
-	wchar_t getSymbol() override;
+	bool isValidMove(olc::vf2d from, olc::vf2d to) override;
+	bool getMoves() override;
 };
 
 class Knight : public Piece
 {
 public:
-	Knight(bool isWhite, Position pos); // constructor
+	Knight(bool isWhite, olc::vf2d pos); // constructor
 	~Knight(); // destructor
 
-	bool isValidMove(Position from, Position to) override;
-	wchar_t getSymbol() override;
+	bool isValidMove(olc::vf2d from, olc::vf2d to) override;
+	bool getMoves() override;
 };
 
 class Bishop : public Piece
 {
 public:
-	Bishop(bool isWhite, Position pos); // constructor
+	Bishop(bool isWhite, olc::vf2d pos); // constructor
 	~Bishop(); // destructor
 
-	bool isValidMove(Position from, Position to) override;
-	wchar_t getSymbol() override;
+	bool isValidMove(olc::vf2d from, olc::vf2d to) override;
+	bool getMoves() override;
 };
 
 class Pawn : public Piece
 {
 public:
-	Pawn(bool isWhite, Position pos); // constructor
+	Pawn(bool isWhite, olc::vf2d pos); // constructor
 	~Pawn(); // destructor
 
-	bool isValidMove(Position from, Position to) override;
-	wchar_t getSymbol() override;
+	bool isValidMove(olc::vf2d from, olc::vf2d to) override;
+	bool getMoves() override;
 };
 
 

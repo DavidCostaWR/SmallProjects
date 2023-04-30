@@ -1,3 +1,5 @@
+//#include "Pieces.h"
+//#include "Board.h"
 #include "PGE_Chess.h"
 
 int main()

@@ -1,19 +1,18 @@
-#include <iostream>
 #include "Board.h"
-#include "Pieces.h"
-#include "Position.h"
-#include <Windows.h>
+
+PGE_Chess* Board::g_engine = nullptr;
 
 Board::Board()
 {
     // Initializations
     alivePieces.clear();
-    // Create pieces
-    for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x++) {
 
-            Position pos = { x,y };
-            int index = x + y * WIDTH;
+    // Create pieces
+    for (int y = 0; y < ROWS; y++) {
+        for (int x = 0; x < COLUMNS; x++) {
+
+            olc::vi2d pos = { x,y };
+            int index = x + y * COLUMNS;
 
             if (y == 0 || y == 7) {
                 if (x == 0 || x == 7) {
@@ -50,7 +49,7 @@ Board::Board()
 
 Board::~Board()
 {
-    for (int i = 0; i < HEIGHT * WIDTH; i++) {
+    for (int i = 0; i < ROWS * COLUMNS; i++) {
         delete board[i];
     }
 }
@@ -58,26 +57,45 @@ Board::~Board()
 void Board::printBoard() {
 }
 
-Piece* Board::getPiece(Position pos){
-    return board[pos.x + pos.y * WIDTH];
+Piece* Board::getPiece(olc::vi2d pos){
+    for (auto piece : alivePieces) {
+        if (piece->pPos == pos) {
+            return piece;
+        }
+    }
+    return nullptr;
+
+    //return board[pos.x + pos.y * COLUMNS];
 }
 
-void Board::setPiece(Position pos, Piece* piece)
+bool Board::isMoveLegal(Piece* activePiece, olc::vi2d pos)
 {
-    if (pos.x < 0 || pos.x >= WIDTH || pos.y < 0 || pos.y >= HEIGHT) {
-        return;
+    for (auto& move : activePiece->nMoves) {
+        if (move == pos) {
+            return true;
+        }
     }
-    board[pos.y * WIDTH + pos.x] = piece;
+    return false;
+}
+
+bool removePiece(Piece* pieceToRemove) {
+    //alivePieces
+
 }
 
 void Board::updateBoard() {
-    //clear board
-    for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            int index = x + y * WIDTH;
+    //remove captured
+    alivePieces.erase(std::remove_if(alivePieces.begin(), alivePieces.end(), [](Piece* p) { return !p->bIsAlive; }), alivePieces.end());
+
+    // Clear Board
+    for (int y = 0; y < ROWS; y++) {
+        for (int x = 0; x < COLUMNS; x++) {
+            int index = x + y * COLUMNS;
             board[index] = nullptr;
         }
     }
-    //remove captured
-    alivePieces.erase(std::remove_if(alivePieces.begin(), alivePieces.end(), [](Piece* p) { return !p->bIsAlive; }), alivePieces.end());
+    for (auto& piece : alivePieces) {
+        int index = piece->pPos.x + piece->pPos.y * COLUMNS;
+        board[index] = piece;
+    }
 }
