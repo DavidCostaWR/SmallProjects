@@ -24,7 +24,6 @@ public:
     Piece* getPiece(olc::vi2d pos);
     void printBoard();
     bool isMoveLegal(Piece* activePiece, olc::vi2d pos);
-    bool removePiece(Piece* pieceToRemove);
     void updateBoard();
 
 private:
