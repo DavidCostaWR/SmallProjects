@@ -183,6 +183,20 @@ bool PGE_Chess::UpdateBoard(float fElapsedTime) {
 		if(!piece->bSelected)
 			piece->DrawPiece(scale, nGamePhase, tempPosition, MouseBoardPos);
 	}
+	// Possible moves
+	if (nGamePhase == MovePiece) {
+		olc::vf2d fPos = { 0,0 };
+		for (auto& pos : activePiece->nMoves) {
+			if (!(turn % 2)) {
+				fPos = { nBoardOffsetX + 0.81f * boardFrame.x + pos.x * fTileSize, nBoardOffsetY + 1.055f * boardFrame.y + (board->ROWS - 1 - pos.y) * fTileSize };
+			}
+			if (turn % 2) {
+				fPos = { nBoardOffsetX + 0.81f * boardFrame.x + pos.x * fTileSize, nBoardOffsetY + 1.055f * boardFrame.y + pos.y * fTileSize };
+			}
+			FillRectDecal(fPos, { fTileSize * .99f, fTileSize * .99f }, olc::Pixel(255, 0, 255, 35));
+		}
+	}
+
 	// Selected piece
 	for (auto& piece : board->alivePieces) {
 		if (piece->bSelected)

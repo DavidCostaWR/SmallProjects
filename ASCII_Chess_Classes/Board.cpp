@@ -78,11 +78,6 @@ bool Board::isMoveLegal(Piece* activePiece, olc::vi2d pos)
     return false;
 }
 
-bool removePiece(Piece* pieceToRemove) {
-    //alivePieces
-
-}
-
 void Board::updateBoard() {
     //remove captured
     alivePieces.erase(std::remove_if(alivePieces.begin(), alivePieces.end(), [](Piece* p) { return !p->bIsAlive; }), alivePieces.end());
