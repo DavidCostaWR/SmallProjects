@@ -1,6 +1,14 @@
 #include <random>
 #include "olcConsoleGameEngine.h"
 
+enum Keys
+{
+	Key_W = 87,
+	Key_S = 83,
+	Key_A = 65,
+	Key_D = 68
+
+};
 struct sBall
 {
 	float px, py;
@@ -14,7 +22,9 @@ struct sBall
 struct sBar
 {
 	float px, py;
+	float vy;
 	float w, h;
+	std::string side;
 };
 
 float deg2rad(float ang)
@@ -34,12 +44,13 @@ private:
 	std::vector<sBall> vecBalls;
 	std::vector<sBar> vecBars;
 	float fGameSpeed;
+	float fSpeedModifier;
 	int nBallCounter;
 	int nDefenseCounter;
 	
 	void AddBall(float x, float y, float Speed)
 	{
-		float angOffset = 20.0f;	//degrees
+		float angOffset = 30.0f;	//degrees
 		std::random_device rd;
 		std::mt19937 gen(rd());
 		//std::uniform_real_distribution<float> dis(-1, 1);
@@ -64,6 +75,7 @@ public:
 	{
 		// Set game parameters
 		fGameSpeed = 200;
+		fSpeedModifier = 1.25f;
 		nBallCounter = 0;
 
 		// Create Bars
@@ -73,9 +85,13 @@ public:
 		LBar.h = ScreenHeight() / 8;
 		LBar.py = ScreenHeight() / 2;
 		LBar.px = 8;
+		LBar.vy = 0;
 
 		sBar RBar = LBar;
 		RBar.px = ScreenWidth() - LBar.px;
+
+		LBar.side = "Left";
+		RBar.side = "Right";
 
 		vecBars.emplace_back(LBar);
 		vecBars.emplace_back(RBar);
@@ -102,18 +118,59 @@ public:
 			nDefenseCounter -= 5;
 		}
 
+		//Add balls manually
+		if (m_keys[VK_RETURN].bPressed)
+		{
+			AddBall(ScreenWidth() / 2, ScreenHeight() / 2, fGameSpeed);
+			nBallCounter++;
+		}
+
 		//Update speed
 		if (nBallCounter >= 5)
 		{
-			fGameSpeed *= 1.1f; 
+			fGameSpeed *= fSpeedModifier;
 			nBallCounter -= 5;
 		}
 
 		//Update bars position
-		if (IsFocused()) {
+		/*if (IsFocused()) {
 			for (auto& bar : vecBars) {
 				bar.py = m_mousePosY;
 			}
+		}*/
+
+		//Update bars position
+		for (auto& bar : vecBars)
+		{
+			bar.vy = 0;
+
+			if (bar.side == "Left") 
+			{
+				float Speed = 300;
+				if (m_keys[VK_LSHIFT].bHeld)
+					Speed *= 2;
+				if (m_keys[Key_W].bHeld)
+					bar.vy = -Speed;
+				else if (m_keys[Key_S].bHeld)
+					bar.vy = Speed;
+			}
+
+			if (bar.side == "Right")
+			{
+				float Speed = 300;
+				if (m_keys[VK_RSHIFT].bHeld)
+					Speed *= 2;
+				if (m_keys[VK_UP].bHeld)
+					bar.vy = -Speed;
+				else if (m_keys[VK_DOWN].bHeld)
+					bar.vy = Speed;
+			}
+
+			bar.py += bar.vy * fElapsedTime;
+			if (bar.py < 0)
+				bar.py = 0;
+			if (bar.py > ScreenHeight())
+				bar.py = ScreenHeight();
 		}
 
 		//Update balls position
