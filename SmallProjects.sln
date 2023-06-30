@@ -5,9 +5,13 @@ VisualStudioVersion = 17.5.33414.496
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASCII Chess", "Chess\Chess.vcxproj", "{BDF367F7-C09C-425D-829B-10C9FAC3B84D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASCII_Chess_Classes", "ASCII_Chess_Classes\ASCII_Chess_Classes.vcxproj", "{D2D462E7-A543-45C2-BB1F-90358E1A015B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PGE_Chess", "ASCII_Chess_Classes\ASCII_Chess_Classes.vcxproj", "{D2D462E7-A543-45C2-BB1F-90358E1A015B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pong", "Pong\Pong.vcxproj", "{95D77715-5E12-4931-8255-62F27FB6FEEA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Balls", "Balls\Balls.vcxproj", "{7775D563-4C9A-4072-8A36-834C6C982600}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Bolas Ines", "Bolas Ines\Bolas Ines.vcxproj", "{487B3BD8-B973-4C71-AC19-20B744A48F0A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +45,22 @@ Global
 		{95D77715-5E12-4931-8255-62F27FB6FEEA}.Release|x64.Build.0 = Release|x64
 		{95D77715-5E12-4931-8255-62F27FB6FEEA}.Release|x86.ActiveCfg = Release|Win32
 		{95D77715-5E12-4931-8255-62F27FB6FEEA}.Release|x86.Build.0 = Release|Win32
+		{7775D563-4C9A-4072-8A36-834C6C982600}.Debug|x64.ActiveCfg = Debug|x64
+		{7775D563-4C9A-4072-8A36-834C6C982600}.Debug|x64.Build.0 = Debug|x64
+		{7775D563-4C9A-4072-8A36-834C6C982600}.Debug|x86.ActiveCfg = Debug|Win32
+		{7775D563-4C9A-4072-8A36-834C6C982600}.Debug|x86.Build.0 = Debug|Win32
+		{7775D563-4C9A-4072-8A36-834C6C982600}.Release|x64.ActiveCfg = Release|x64
+		{7775D563-4C9A-4072-8A36-834C6C982600}.Release|x64.Build.0 = Release|x64
+		{7775D563-4C9A-4072-8A36-834C6C982600}.Release|x86.ActiveCfg = Release|Win32
+		{7775D563-4C9A-4072-8A36-834C6C982600}.Release|x86.Build.0 = Release|Win32
+		{487B3BD8-B973-4C71-AC19-20B744A48F0A}.Debug|x64.ActiveCfg = Debug|x64
+		{487B3BD8-B973-4C71-AC19-20B744A48F0A}.Debug|x64.Build.0 = Debug|x64
+		{487B3BD8-B973-4C71-AC19-20B744A48F0A}.Debug|x86.ActiveCfg = Debug|Win32
+		{487B3BD8-B973-4C71-AC19-20B744A48F0A}.Debug|x86.Build.0 = Debug|Win32
+		{487B3BD8-B973-4C71-AC19-20B744A48F0A}.Release|x64.ActiveCfg = Release|x64
+		{487B3BD8-B973-4C71-AC19-20B744A48F0A}.Release|x64.Build.0 = Release|x64
+		{487B3BD8-B973-4C71-AC19-20B744A48F0A}.Release|x86.ActiveCfg = Release|Win32
+		{487B3BD8-B973-4C71-AC19-20B744A48F0A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
