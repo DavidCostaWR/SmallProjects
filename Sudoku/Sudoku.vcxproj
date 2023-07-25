@@ -18,11 +18,17 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\olcPixelGameEngine.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Sudoku.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{7775d563-4c9a-4072-8a36-834c6c982600}</ProjectGuid>
-    <RootNamespace>Balls</RootNamespace>
+    <ProjectGuid>{af27b0ea-0f15-41ed-846b-337497cda56c}</ProjectGuid>
+    <RootNamespace>Sudoku</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -126,12 +132,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Balls.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\olcPixelGameEngine.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

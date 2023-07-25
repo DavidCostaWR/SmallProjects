@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Balls", "Balls\Balls.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Bolas Ines", "Bolas Ines\Bolas Ines.vcxproj", "{487B3BD8-B973-4C71-AC19-20B744A48F0A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sudoku", "Sudoku\Sudoku.vcxproj", "{AF27B0EA-0F15-41ED-846B-337497CDA56C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -61,6 +63,14 @@ Global
 		{487B3BD8-B973-4C71-AC19-20B744A48F0A}.Release|x64.Build.0 = Release|x64
 		{487B3BD8-B973-4C71-AC19-20B744A48F0A}.Release|x86.ActiveCfg = Release|Win32
 		{487B3BD8-B973-4C71-AC19-20B744A48F0A}.Release|x86.Build.0 = Release|Win32
+		{AF27B0EA-0F15-41ED-846B-337497CDA56C}.Debug|x64.ActiveCfg = Debug|x64
+		{AF27B0EA-0F15-41ED-846B-337497CDA56C}.Debug|x64.Build.0 = Debug|x64
+		{AF27B0EA-0F15-41ED-846B-337497CDA56C}.Debug|x86.ActiveCfg = Debug|Win32
+		{AF27B0EA-0F15-41ED-846B-337497CDA56C}.Debug|x86.Build.0 = Debug|Win32
+		{AF27B0EA-0F15-41ED-846B-337497CDA56C}.Release|x64.ActiveCfg = Release|x64
+		{AF27B0EA-0F15-41ED-846B-337497CDA56C}.Release|x64.Build.0 = Release|x64
+		{AF27B0EA-0F15-41ED-846B-337497CDA56C}.Release|x86.ActiveCfg = Release|Win32
+		{AF27B0EA-0F15-41ED-846B-337497CDA56C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
