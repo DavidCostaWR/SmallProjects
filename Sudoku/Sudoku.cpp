@@ -3,7 +3,17 @@
 #include <vector>
 #include <algorithm>
 #include <random>
+/*
+			px	#	T
+Cell		20	9	180
+Frame		3	2	6
+line		1	6	6
+3x3 grid	2	2	4
+Total H&W			196
 
+Number = 8x8
+
+*/
 
 enum class GameState
 {
@@ -16,13 +26,19 @@ enum class GameState
 class Sudoku : public olc::PixelGameEngine
 {
 private:
+	const UINT8 nCellDim = 40;
+	const UINT8 nFrameDim = 6;
+	const UINT8 nlineDim = 1;
+	const UINT8 n3x3GridDim = 3;
+	const UINT8 nNumberScale = 3;
+
 	float easyRecord = 0.0f;
 	float mediumRecord = 0.0f;
 	float hardRecord = 0.0f;
-	int difficulty = 0;
-	int grid[9][9]{};
-	int cursorX = 0;
-	int cursorY = 0;
+	UINT8 difficulty = 0;
+	UINT8 grid[9][9]{};
+	UINT8 cursorX = 0;
+	UINT8 cursorY = 0;
 	bool quit = false;
 	float solveTimer = 0.0f;
 	GameState gameState = GameState::MAIN_MENU;
@@ -54,10 +70,11 @@ public:
 		case GameState::USER_SOLVING:
 			solveTimer += fElapsedTime;
 			HandleInput();
-			Clear(olc::BLACK);
-			DrawCursor(10,10, 180, 180);
-			DrawGrid(10, 10, 180, 180);
-			DrawNumbers(10, 10, 180, 180);
+
+			Clear(olc::DARK_GREEN); // Replace with draw background
+			DrawGrid();
+			DrawCursor();
+			DrawNumbers();
 			if (CheckVictory())
 				gameState = GameState::DISPLAY_STATS;
 			break;
@@ -233,34 +250,75 @@ private:
 			grid[cursorY][cursorX] = newCellValue;
 	}
 
-	void DrawCursor(int x, int y, int width, int height)
+	void DrawCursor()
 	{
-		int cellSize = width / 9;
-		int cursorScreenX = x + cursorX * cellSize;
-		int cursorScreenY = y + cursorY * cellSize;
-		FillRect(cursorScreenX, cursorScreenY, cellSize, cellSize, olc::CYAN);
+		const int nBoardDim = 9 * nCellDim + 2 * nFrameDim;
+
+		// Center board with screen
+		int px = (ScreenWidth() - nBoardDim) / 2 + nFrameDim;
+		int py = (ScreenHeight() - nBoardDim) / 2 + nFrameDim;
+
+		int cursorScreenX = px + cursorX * nCellDim + n3x3GridDim;
+		int cursorScreenY = py + cursorY * nCellDim + n3x3GridDim;
+		FillRect(cursorScreenX, cursorScreenY, nCellDim - 2 * n3x3GridDim, nCellDim - 2 * n3x3GridDim, olc::CYAN);
 	}
-	
-	void DrawGrid(int x, int y, int width, int height)
+
+	void DrawGrid()
 	{
-		int cellSize = width / 9;
-		for (int i = 0; i <= 9; ++i)
+		const int nBoardDim = 9 * nCellDim + 2 * nFrameDim;
+
+		// Center board with screen
+		int px = (ScreenWidth() - nBoardDim) / 2;
+		int py = (ScreenHeight() - nBoardDim) / 2;
+
+		// Draw white board
+		FillRect(px, py, nBoardDim, nBoardDim, olc::WHITE);	
+
+		// Draw Frame
+		for (int i = 0; i < nFrameDim; ++i)
 		{
-			int px = x + i * cellSize;
-			int py = y + i * cellSize;
-			DrawLine(px, y, px, y + height);
-			DrawLine(x, py, x + width, py);
-			if (i % 3 == 0)
+			DrawRect(px + i, py + i, nBoardDim - 2 * i, nBoardDim - 2 * i, olc::BLACK);
+		}
+
+		// Draw grid
+		for (int i = 1; i < 9; ++i)
+		{
+			int x = px + i * nCellDim + nFrameDim;
+			int y = py + i * nCellDim + nFrameDim;
+
+			for (int j = 0; j < (int)(nlineDim / 2) + 1; ++j)
 			{
-				FillRect(px - 1, y, 2, height, olc::DARK_GREY);
-				FillRect(x, py - 1, width, 2, olc::DARK_GREY);
+				DrawLine(x + j, py + nFrameDim, x + j, py + nFrameDim + nBoardDim - 2 * nFrameDim, olc::GREY);
+				DrawLine(x - j, py + nFrameDim, x - j, py + nFrameDim + nBoardDim - 2 * nFrameDim, olc::GREY);
+				DrawLine(px + nFrameDim, y + j, px + nFrameDim + nBoardDim - 2 * nFrameDim, y + j, olc::GREY);
+				DrawLine(px + nFrameDim, y - j, px + nFrameDim + nBoardDim - 2 * nFrameDim, y - j, olc::GREY);
+			}
+		}
+
+		// Draw 3x3 grid
+		for (int i = 1; i < 3; ++i)
+		{
+			int x = px + i * 3 * nCellDim + nFrameDim;
+			int y = py + i * 3 * nCellDim + nFrameDim;
+
+			for (int j = 0; j < (int)(n3x3GridDim / 2) + 1; ++j)
+			{
+				DrawLine(x - j, py + nFrameDim, x - j, py + nFrameDim + nBoardDim - 2 * nFrameDim, olc::DARK_GREY);
+				DrawLine(x + j, py + nFrameDim, x + j, py + nFrameDim + nBoardDim - 2 * nFrameDim, olc::DARK_GREY);
+				DrawLine(px + nFrameDim, y + j, px + nFrameDim + nBoardDim - 2 * nFrameDim, y + j, olc::DARK_GREY);
+				DrawLine(px + nFrameDim, y - j, px + nFrameDim + nBoardDim - 2 * nFrameDim, y - j, olc::DARK_GREY);
 			}
 		}
 	}
-
-	void DrawNumbers(int x, int y, int width, int height)
+		
+	void DrawNumbers()
 	{
-		int cellSize = width / 9;
+		const int nBoardDim = 9 * nCellDim + 2 * nFrameDim;
+		const int nNumberSize = 8 * nNumberScale;
+
+		int px = (ScreenWidth() - nBoardDim) / 2 + nFrameDim;
+		int py = (ScreenHeight() - nBoardDim) / 2 + nFrameDim;
+
 		for (int row = 0; row < 9; ++row)
 		{
 			for (int col = 0; col < 9; ++col)
@@ -268,9 +326,9 @@ private:
 				int num = grid[row][col];
 				if (num != 0)
 				{
-					int px = x + col * cellSize + cellSize / 6;
-					int py = y + row * cellSize + cellSize / 6;
-					DrawString(px, py, std::to_string(num), olc::WHITE, 2);
+					int x = px + col * nCellDim + (nCellDim - nNumberSize) / 2;
+					int y = py + row * nCellDim + (nCellDim - nNumberSize) / 2;
+					DrawString(x, y, std::to_string(num), olc::BLACK, nNumberScale);
 				}
 			}
 		}
@@ -290,16 +348,33 @@ private:
 			hardRecord = (solveTimer > hardRecord ? solveTimer : hardRecord);
 			break;
 		}
-		int minutes = (int)(solveTimer / 60);
-		int seconds = (int)(solveTimer - minutes * 60);
+		const int nMinutes = (int)(solveTimer / 60);
+		const int nSeconds = (int)(solveTimer - nMinutes * 60);
+		const std::string sSeconds = (nSeconds < 10 ? ("0" + std::to_string(nSeconds)) : std::to_string(nSeconds));
+
+		const int nEasyMinutes = (int)(easyRecord / 60);
+		const int nEasySeconds = (int)(easyRecord - nEasyMinutes * 60);
+		const std::string sEasySeconds = (nEasySeconds < 10 ? ("0" + std::to_string(nEasySeconds)) : std::to_string(nEasySeconds));
+
+		const int nMediumMinutes = (int)(mediumRecord / 60);
+		const int nMediumSeconds = (int)(mediumRecord - nMediumMinutes * 60);
+		const std::string sMediumSeconds = (nMediumSeconds < 10 ? ("0" + std::to_string(nMediumSeconds)) : std::to_string(nMediumSeconds));
+
+		const int nHardMinutes = (int)(hardRecord / 60);
+		const int nHardSeconds = (int)(hardRecord - nHardMinutes * 60);
+		const std::string sHardSeconds = (nHardSeconds < 10 ? ("0" + std::to_string(nHardSeconds)) : std::to_string(nHardSeconds));
+
+
 		Clear(olc::BLACK);
 		int col = 30;
 		DrawString(10, col, "Puzzle Solved!", olc::WHITE, 2); col += 30;
-		DrawString(10, col, "Solve Time: " + std::to_string(minutes) + ":" + std::to_string(seconds), olc::WHITE, 1); col += 30;
+		DrawString(10, col, "Solve Time: " + std::to_string(nMinutes) + ":" + sSeconds, olc::WHITE, 1); col += 30;
+
 		DrawString(10, col, "Best Times:", olc::WHITE, 2); col += 30;
-		DrawString(10, col, "Easy: " + std::to_string((int)(easyRecord / 60)) + ":" + std::to_string((int)(easyRecord - (int)(easyRecord / 60) * 60))); col += 15;
-		DrawString(10, col, "Medium: " + std::to_string((int)(mediumRecord / 60)) + ":" + std::to_string((int)(mediumRecord - (int)(mediumRecord / 60) * 60))); col += 15;
-		DrawString(10, col, "Hard: " + std::to_string((int)(hardRecord / 60)) + ":" + std::to_string((int)(hardRecord - (int)(hardRecord / 60) * 60))); col += 30;
+		DrawString(10, col, "Easy: " + std::to_string(nEasyMinutes) + ":" + sEasySeconds, olc::WHITE, 1); col += 15;
+		DrawString(10, col, "Medium: " + std::to_string(nMediumMinutes) + ":" + sMediumSeconds, olc::WHITE, 1); col += 15;
+		DrawString(10, col, "Hard: " + std::to_string(nHardMinutes) + ":" + sHardSeconds, olc::WHITE, 1); col += 30;
+
 		DrawString(10, col, "Press Enter for Main Menu", olc::WHITE, 1); col += 15;
 		DrawString(10, col, "Press Escape to Exit", olc::WHITE, 1);
 
@@ -311,7 +386,7 @@ private:
 int main()
 {
 	Sudoku sudoku;
-	if (sudoku.Construct(300, 300, 2, 2))
+	if (sudoku.Construct(400, 400, 1, 1))
 		sudoku.Start();
 	return 0;
 }
