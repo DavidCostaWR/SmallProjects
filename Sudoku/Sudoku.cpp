@@ -41,6 +41,7 @@ private:
 	UINT8 cursorY = 0;
 	bool quit = false;
 	float solveTimer = 0.0f;
+	float fBackgroundTimer = 0.0f;
 	GameState gameState = GameState::MAIN_MENU;
 	std::mt19937 rng{ std::random_device{}() };
 
@@ -60,6 +61,8 @@ public:
 		case GameState::MAIN_MENU:
 			// Handle main menu
 			solveTimer = 0;
+
+			DrawBackground(fElapsedTime, olc::DARK_BLUE, olc::Pixel(0, 0, 200));
 			DrawMainMenu();
 			break;
 		case GameState::PUZZLE_CREATION:
@@ -71,7 +74,7 @@ public:
 			solveTimer += fElapsedTime;
 			HandleInput();
 
-			Clear(olc::DARK_GREEN); // Replace with draw background
+			DrawBackground(fElapsedTime, olc::DARK_BLUE, olc::Pixel(0, 0, 200));
 			DrawGrid();
 			DrawCursor();
 			DrawNumbers();
@@ -79,6 +82,7 @@ public:
 				gameState = GameState::DISPLAY_STATS;
 			break;
 		case GameState::DISPLAY_STATS:
+			DrawBackground(fElapsedTime, olc::RED, olc::DARK_CYAN);
 			DrawStats();
 			break;
 		}
@@ -96,7 +100,6 @@ private:
 
 	void DrawMainMenu()
 	{
-		Clear(olc::BLACK);
 		DrawString(10, 30, "Sudoku Generator", olc::WHITE, 2);
 		DrawString(10, 60, "Select Difficulty:", olc::WHITE, 1);
 
@@ -250,6 +253,22 @@ private:
 			grid[cursorY][cursorX] = newCellValue;
 	}
 
+	void DrawBackground(float fElapsedTime, olc::Pixel topColor, olc::Pixel bottomColor)
+	{
+		Clear(topColor);
+		float fAmplitude = ScreenHeight()/7;
+		float fFrequency = 1500.0f;
+		
+		fBackgroundTimer += fElapsedTime * 0.75f;
+
+
+		for (int x = 0; x < ScreenWidth(); ++x)
+		{
+			float fSineWave = (fAmplitude * std::sin(2 * 3.141592 * fFrequency * x - fBackgroundTimer)) + ScreenHeight() * 4/7;
+			DrawLine(x, 0, x, fSineWave, bottomColor);
+		}
+	}
+
 	void DrawCursor()
 	{
 		const int nBoardDim = 9 * nCellDim + 2 * nFrameDim;
@@ -365,7 +384,6 @@ private:
 		const std::string sHardSeconds = (nHardSeconds < 10 ? ("0" + std::to_string(nHardSeconds)) : std::to_string(nHardSeconds));
 
 
-		Clear(olc::BLACK);
 		int col = 30;
 		DrawString(10, col, "Puzzle Solved!", olc::WHITE, 2); col += 30;
 		DrawString(10, col, "Solve Time: " + std::to_string(nMinutes) + ":" + sSeconds, olc::WHITE, 1); col += 30;
