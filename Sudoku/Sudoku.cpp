@@ -270,10 +270,19 @@ private:
 		if (GetKey(olc::Key::ESCAPE).bPressed)	gameState = GameState::MAIN_MENU;
 
 		// Move cursor
-		if (GetKey(olc::Key::RIGHT).bPressed)	cursorX = (cursorX == 8 ? 0 : cursorX + 1);
-		if (GetKey(olc::Key::LEFT).bPressed)	cursorX = (cursorX == 0 ? 8 : cursorX - 1);
-		if (GetKey(olc::Key::DOWN).bPressed)	cursorY = (cursorY == 8 ? 0 : cursorY + 1);
-		if (GetKey(olc::Key::UP).bPressed) 		cursorY = (cursorY == 0 ? 8 : cursorY - 1);
+		if (Screen2Grid(GetMouseX(), GetMouseY()).x > 0 && Screen2Grid(GetMouseX(), GetMouseY()).y > 0)
+		{
+			cursorX = Screen2Grid(GetMouseX(), GetMouseY()).x - 1;
+			cursorY = Screen2Grid(GetMouseX(), GetMouseY()).y - 1;
+		}
+		else
+		{
+			if (GetKey(olc::Key::RIGHT).bPressed)	cursorX = (cursorX == 8 ? 0 : cursorX + 1);
+			if (GetKey(olc::Key::LEFT).bPressed)	cursorX = (cursorX == 0 ? 8 : cursorX - 1);
+			if (GetKey(olc::Key::DOWN).bPressed)	cursorY = (cursorY == 8 ? 0 : cursorY + 1);
+			if (GetKey(olc::Key::UP).bPressed) 		cursorY = (cursorY == 0 ? 8 : cursorY - 1);
+		}
+
 
 		// Toggle highlited numbers
 		if (GetKey(olc::Key::H).bPressed) bHighlightNumberSelected = !bHighlightNumberSelected;
@@ -376,9 +385,11 @@ private:
 		std::string sSecondsRecord = std::to_string(nSecondsRecord);
 		if (nSecondsRecord < 10) sSecondsRecord = "0" + sSecondsRecord;
 
-		DrawString(nFirstLineX + nHeaderWidth / 2, nFirstLineY + 0 * nLineBrk, "Difficulty: " + sDifficulty, olc::BLACK, nNumberScale);
 		DrawString(nFirstLineX, nFirstLineY + 0 * nLineBrk, "Time: " + sMinutes + ":" + sSeconds, olc::BLACK, nNumberScale);
 		DrawString(nFirstLineX, nFirstLineY + 1 * nLineBrk, "Record: " + sMinutesRecord + ":" + sSecondsRecord, olc::BLACK, nNumberScale);
+
+		DrawString(nFirstLineX + nHeaderWidth / 2, nFirstLineY + 0 * nLineBrk, "Difficulty: " + sDifficulty, olc::BLACK, nNumberScale);
+		DrawString(nFirstLineX + nHeaderWidth / 2, nFirstLineY + 1 * nLineBrk, "Mouse: (" + std::to_string((int)Screen2Grid(GetMouseX(), GetMouseY()).x) + ", " + std::to_string((int)Screen2Grid(GetMouseX(), GetMouseY()).y) + ")", olc::BLACK, nNumberScale);
 	}
 
 	void DrawCursor()
@@ -562,6 +573,26 @@ private:
 	olc::vf2d Grid2Screen(int px, int py, float margin = 0) // returns top left position of square px, py, offset by margin
 	{
 		return { nGridPx + (px - 1) * (nlineDim + nCellDim) + (int)((px - 1) / 3) * (n3x3GridDim - nlineDim) + margin, nGridPy + (py - 1) * (nlineDim + nCellDim) + (int)((py - 1) / 3) * (n3x3GridDim - nlineDim) + margin };
+	}
+
+	olc::vd2d Screen2Grid(float sx, float sy)
+	{
+		int nGridX = (sx - nGridPx) / (nCellDim * 3 + nlineDim * 2 + n3x3GridDim);
+		int nSubGridX = (sx - (Grid2Screen(nGridX * 3 + 1, 0).x + 1)) / (nCellDim + nlineDim);
+
+		int nGridY = (sy - nGridPy) / (nCellDim * 3 + nlineDim * 3 + n3x3GridDim);
+		int nSubGridY = (sy - (Grid2Screen(0,nGridY * 3 + 1).y + 1)) / (nCellDim + nlineDim);
+
+		int px = nGridX * 3 + 1 + nSubGridX;
+		int py = nGridY * 3 + 1 + nSubGridY;
+		if (sx > nGridPx && sy > nGridPy && px < 10 && py < 10)
+			return olc::vd2d(px,py);
+		return { 0,0 };
+	}
+
+	bool InBoard(float sx, float sy)
+	{
+		return sx >= nGridPx && sx <= nGridPx + nBoardDim && sy >= nGridPy && sy <= nGridPy + nBoardDim;
 	}
 
 };
