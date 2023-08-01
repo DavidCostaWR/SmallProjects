@@ -3,6 +3,10 @@
 #include <vector>
 #include <algorithm>
 #include <random>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+
 /*
 			px	#	T
 Cell		20	9	180
@@ -15,13 +19,29 @@ Number = 8x8
 
 */
 
+// Enums
 enum class GameState
 {
+	NONE,
 	MAIN_MENU,
 	PUZZLE_CREATION,
 	USER_SOLVING,
 	VICTORY,
 	DISPLAY_STATS
+};
+enum class Difficulty {
+	NONE,
+	EASY,
+	MEDIUM,
+	HARD
+};
+
+// Structs
+struct BestTimes
+{
+	float easy = std::numeric_limits<float>::max();
+	float medium = std::numeric_limits<float>::max();
+	float hard = std::numeric_limits<float>::max();
 };
 
 class Sudoku : public olc::PixelGameEngine
@@ -54,13 +74,14 @@ private:
 	bool quit = false;
 	bool bHighlightNumberSelected = true;
 
-	float easyRecord = 0.0f;
-	float mediumRecord = 0.0f;
-	float hardRecord = 0.0f;
-	UINT8 difficulty = 0;
+	BestTimes bestTimes;
+
+	Difficulty difficulty = Difficulty::NONE;
+
 	int grid[9][9]{};
 	int solutionGrid[9][9]{};
 	int solverGrid[9][9]{};
+	std::vector<int> candidates[9][9];
 	UINT8 cursorX = 0;
 	UINT8 cursorY = 0;
 	float solveTimer = 0.0f;
@@ -75,8 +96,8 @@ public:
 public:
 	bool OnUserCreate() override
 	{
-
 		CenterGame();
+		LoadBestTimes(); // Load best times from file
 		return true;
 	}
 
@@ -95,12 +116,13 @@ public:
 		case GameState::PUZZLE_CREATION:
 			// Create puzzle
 			GenerateSudoku();
-			ClearCells(difficulty * 10);
+			ClearCells((int)difficulty * 10);
 			gameState = GameState::USER_SOLVING;
 			break;
 		case GameState::USER_SOLVING:
 			// update timer
-			solveTimer += fElapsedTime;
+			if(IsFocused() || InBoard(GetMouseX(),GetMouseY()))
+				solveTimer += fElapsedTime;
 			// Handle user input
 			HandleInput();
 			// Draw routunes
@@ -112,7 +134,11 @@ public:
 			if (bHighlightNumberSelected) HighlightNumbers();
 			// Check for victory
 			if (CheckVictory())
+			{
+				UpdateBestTime();
+				SaveBestTimes();
 				gameState = GameState::VICTORY;
+			}
 			break;
 		case GameState::VICTORY:
 			DrawVictory(fElapsedTime);
@@ -137,27 +163,51 @@ private:
 
 	void DrawMainMenu()
 	{
-		DrawString(10, 30, "Sudoku Generator", olc::WHITE, 2);
-		DrawString(10, 60, "Select Difficulty:", olc::WHITE, 1);
+		int nTextSize = 1;
+		int nTitleSize = 2;
 
-		DrawString(10, 90, "1. Easy", olc::WHITE, 1);
-		DrawString(10, 110, "2. Medium", olc::WHITE, 1);
-		DrawString(10, 130, "3. Hard", olc::WHITE, 1);
+		int nLineBrk1 = nTextSize * 8 * 2;
+		int nLineBrk2 = nTitleSize * 8 * 2;
+
+		int px = 4 * nTextSize;
+		int py = nLineBrk2;
+
+		DrawString(px, py, "Sudoku Generator", olc::WHITE, nTitleSize);
+		py += nLineBrk2 + nLineBrk1;
+		DrawString(px, py, "Select Difficulty:", olc::WHITE, nTextSize);
+		DrawString(px + nBoardDim/2, py, "Best Times:", olc::WHITE, nTextSize);
+		py += nLineBrk1;
+		DrawString(px, py, "1. Easy", olc::WHITE, nTextSize);
+		DrawString(px + nBoardDim/2, py, Time2String(bestTimes.easy), olc::WHITE, nTextSize);
+		py += nLineBrk1;
+		DrawString(px, py, "2. Medium", olc::WHITE, nTextSize);
+		DrawString(px + nBoardDim/2, py, Time2String(bestTimes.medium), olc::WHITE, nTextSize);
+		py += nLineBrk1;
+		DrawString(px, py, "3. Hard", olc::WHITE, nTextSize);
+		DrawString(px + nBoardDim/2, py, Time2String(bestTimes.hard), olc::WHITE, nTextSize);
+		py += nLineBrk2;
+		DrawString(px, py, "Press E to Erase Best Times", olc::WHITE, nTextSize);
+
 
 		if (GetKey(olc::Key::K1).bPressed || GetKey(olc::Key::NP1).bPressed)
 		{
-			difficulty = 1;
+			difficulty = Difficulty::EASY;
 			gameState = GameState::PUZZLE_CREATION;
 		}
 		if (GetKey(olc::Key::K2).bPressed || GetKey(olc::Key::NP2).bPressed)
 		{
-			difficulty = 2;
+			difficulty = Difficulty::MEDIUM;
 			gameState = GameState::PUZZLE_CREATION;
 		}
 		if (GetKey(olc::Key::K3).bPressed || GetKey(olc::Key::NP3).bPressed)
 		{
-			difficulty = 3;
+			difficulty = Difficulty::HARD;
 			gameState = GameState::PUZZLE_CREATION;
+		}
+		if (GetKey(olc::Key::E).bPressed)
+		{
+			EraseBestTimes();
+			SaveBestTimes();
 		}
 	}
 
@@ -274,6 +324,15 @@ private:
 		{
 			cursorX = Screen2Grid(GetMouseX(), GetMouseY()).x - 1;
 			cursorY = Screen2Grid(GetMouseX(), GetMouseY()).y - 1;
+			// Click
+			if (GetMouse(0).bPressed && grid[cursorY][cursorX] == 0)
+			{
+				solverGrid[cursorY][cursorX] = (solverGrid[cursorY][cursorX] + 1) % 10;
+			}
+			if (GetMouse(1).bPressed && grid[cursorY][cursorX] == 0)
+			{
+				solverGrid[cursorY][cursorX] = (solverGrid[cursorY][cursorX] + 9) % 10;
+			}
 		}
 		else
 		{
@@ -331,72 +390,50 @@ private:
 		FillRect(nHeaderPx, nHeaderPy, nHeaderWidth, nHeaderHeight, olc::WHITE);
 
 		const int margin = nFrameDim;
-		const int nNumberScale = 1;
-		const int nNumberSize = 8 * nNumberScale;
+		const int nNumberHScale = 1;
+		const int nNumberHSize = 8 * nNumberHScale;
 
-		const int nLineBrk = nNumberSize + margin;
+		const int nLineBrk = nNumberHSize + margin;
 		const int nFirstLineX = nHeaderPx + margin;
 		const int nFirstLineY = nHeaderPy + margin;
 
-		const int nMinutes = solveTimer / 60;
-		const int nSeconds = solveTimer - nMinutes * 60;
-
-		int nMinutesRecord;
-		int nSecondsRecord;
-
 		std::string sDifficulty;
+		float nRecord;
 		std::string sRecord;
-
+		boolean isRecordBroken = false;
 
 		switch (difficulty)
 		{
-		case 1: 
+		case Difficulty::EASY:
 			sDifficulty = "Easy";
-
-			nMinutesRecord = easyRecord / 60;
-			nSecondsRecord = easyRecord - nMinutesRecord * 60;
+			nRecord = bestTimes.easy;
 			break;
-		case 2:
+		case Difficulty::MEDIUM:
 			sDifficulty = "Medium";
-
-			nMinutesRecord = mediumRecord / 60;
-			nSecondsRecord = mediumRecord - nMinutesRecord * 60;
+			nRecord = bestTimes.medium;
 			break;
-		case 3:
+		case Difficulty::HARD:
 			sDifficulty = "Hard";
-
-			nMinutesRecord = hardRecord / 60;
-			nSecondsRecord = hardRecord - nMinutesRecord * 60;
+			nRecord = bestTimes.hard;
 			break;
 		default:
 			sDifficulty = "ERROR";
 			break;
 		}
 
-		std::string sMinutes = std::to_string(nMinutes);
-		if (nMinutes < 10) sMinutes = "0" + sMinutes;
+		DrawString(nFirstLineX, nFirstLineY + 0 * nLineBrk, "Time: " + Time2String(solveTimer), olc::BLACK, nNumberHScale);
+		DrawString(nFirstLineX, nFirstLineY + 1 * nLineBrk, "Record: " + Time2String(nRecord), olc::BLACK, nNumberHScale);
 
-		std::string sSeconds = std::to_string(nSeconds);
-		if (nSeconds < 10) sSeconds = "0" + sSeconds;
-
-		std::string sMinutesRecord = std::to_string(nMinutesRecord);
-		if (nMinutesRecord < 10) sMinutesRecord = "0" + sMinutesRecord;
-
-		std::string sSecondsRecord = std::to_string(nSecondsRecord);
-		if (nSecondsRecord < 10) sSecondsRecord = "0" + sSecondsRecord;
-
-		DrawString(nFirstLineX, nFirstLineY + 0 * nLineBrk, "Time: " + sMinutes + ":" + sSeconds, olc::BLACK, nNumberScale);
-		DrawString(nFirstLineX, nFirstLineY + 1 * nLineBrk, "Record: " + sMinutesRecord + ":" + sSecondsRecord, olc::BLACK, nNumberScale);
-
-		DrawString(nFirstLineX + nHeaderWidth / 2, nFirstLineY + 0 * nLineBrk, "Difficulty: " + sDifficulty, olc::BLACK, nNumberScale);
-		DrawString(nFirstLineX + nHeaderWidth / 2, nFirstLineY + 1 * nLineBrk, "Mouse: (" + std::to_string((int)Screen2Grid(GetMouseX(), GetMouseY()).x) + ", " + std::to_string((int)Screen2Grid(GetMouseX(), GetMouseY()).y) + ")", olc::BLACK, nNumberScale);
+		DrawString(nFirstLineX + nHeaderWidth / 2, nFirstLineY + 0 * nLineBrk, "Difficulty: " + sDifficulty, olc::BLACK, nNumberHScale);
+		//DrawString(nFirstLineX + nHeaderWidth / 2, nFirstLineY + 1 * nLineBrk, "Mouse: (" + std::to_string((int)Screen2Grid(GetMouseX(), GetMouseY()).x) + ", " + std::to_string((int)Screen2Grid(GetMouseX(), GetMouseY()).y) + ")", olc::BLACK, nNumberHScale);
 	}
 
 	void DrawCursor()
 	{
+		const olc::Pixel color = olc::Pixel(180,180,255,255);
 		const float cursorMargin = n3x3GridDim;
 		const float cursorSize = nCellDim - 2 * cursorMargin;
-		FillRect(Grid2Screen(cursorX + 1, cursorY + 1, cursorMargin), olc::vi2d(cursorSize, cursorSize), olc::RED);
+		FillRect(Grid2Screen(cursorX + 1, cursorY + 1, cursorMargin), olc::vi2d(cursorSize, cursorSize), color);
 	}
 
 	void DrawGrid()
@@ -458,7 +495,7 @@ private:
 				if (num != 0)
 				{
 					olc::Pixel numColor = olc::DARK_GREY;
-					if (!IsValidMove(row, col, num)) numColor = olc::DARK_RED;
+					if (!IsValidMove(row, col, num)) numColor = olc::RED;
 					DrawString(Grid2Screen(col + 1, row + 1, margin), std::to_string(num), numColor, nNumberScale);
 				}
 			}
@@ -480,8 +517,8 @@ private:
 			{
 				for (int col = 0; col < 9; ++col)
 				{
-					if ((grid[row][col] == nSelection && row != cursorY && col != cursorX) || 
-						(solverGrid[row][col] == nSelection && row != cursorY && col != cursorX))
+					if ((grid[row][col] == nSelection && (row != cursorY || col != cursorX)) || 
+						(solverGrid[row][col] == nSelection && (row != cursorY || col != cursorX)))
 					{
 						DrawString(Grid2Screen(col + 1, row + 1, margin), std::to_string(nSelection), olc::BLUE, nNumberScale);
 					}
@@ -492,46 +529,46 @@ private:
 
 	void DrawStats()
 	{
+		std::string sDifficulty = "";
+
 		switch (difficulty)
 		{
-		case 1:
-			easyRecord = (solveTimer > easyRecord ? solveTimer : easyRecord);
+		case Difficulty::EASY:
+			sDifficulty = "Easy";
 			break;
-		case 2:
-			mediumRecord = (solveTimer > mediumRecord ? solveTimer : mediumRecord);
+		case Difficulty::MEDIUM:
+			sDifficulty = "Medium";
 			break;
-		case 3:
-			hardRecord = (solveTimer > hardRecord ? solveTimer : hardRecord);
+		case Difficulty::HARD:
+			sDifficulty = "Hard";
 			break;
 		}
-		const int nMinutes = (int)(solveTimer / 60);
-		const int nSeconds = (int)(solveTimer - nMinutes * 60);
-		const std::string sSeconds = (nSeconds < 10 ? ("0" + std::to_string(nSeconds)) : std::to_string(nSeconds));
+		int nScale = 1;
+		int nTab = 8 * 8 * nScale;
+		
+		int px = 10;
+		int py = 30;
 
-		const int nEasyMinutes = (int)(easyRecord / 60);
-		const int nEasySeconds = (int)(easyRecord - nEasyMinutes * 60);
-		const std::string sEasySeconds = (nEasySeconds < 10 ? ("0" + std::to_string(nEasySeconds)) : std::to_string(nEasySeconds));
+		DrawString(px, py, sDifficulty + " Puzzle Solved!", olc::WHITE, 2*nScale);
+		py += 30;
+		DrawString(px, py, "Solve Time: " + Time2String(solveTimer), olc::WHITE, nScale);
+		py += 30;
 
-		const int nMediumMinutes = (int)(mediumRecord / 60);
-		const int nMediumSeconds = (int)(mediumRecord - nMediumMinutes * 60);
-		const std::string sMediumSeconds = (nMediumSeconds < 10 ? ("0" + std::to_string(nMediumSeconds)) : std::to_string(nMediumSeconds));
+		DrawString(px, py, "Best Times:", olc::WHITE, 2);
+		py += 30;
+		DrawString(px, py, "Easy: ", olc::WHITE, nScale);
+		DrawString(px + nTab, py, Time2String(bestTimes.easy), olc::WHITE, nScale);
+		py += 15;
+		DrawString(px, py, "Medium: ", olc::WHITE, nScale);
+		DrawString(px + nTab, py, Time2String(bestTimes.medium), olc::WHITE, nScale);
+		py += 15;
+		DrawString(px, py, "Hard: ", olc::WHITE, nScale);
+		DrawString(px + nTab, py, Time2String(bestTimes.hard), olc::WHITE, nScale);
+		py += 30;
 
-		const int nHardMinutes = (int)(hardRecord / 60);
-		const int nHardSeconds = (int)(hardRecord - nHardMinutes * 60);
-		const std::string sHardSeconds = (nHardSeconds < 10 ? ("0" + std::to_string(nHardSeconds)) : std::to_string(nHardSeconds));
-
-
-		int col = 30;
-		DrawString(10, col, "Puzzle Solved!", olc::WHITE, 2); col += 30;
-		DrawString(10, col, "Solve Time: " + std::to_string(nMinutes) + ":" + sSeconds, olc::WHITE, 1); col += 30;
-
-		DrawString(10, col, "Best Times:", olc::WHITE, 2); col += 30;
-		DrawString(10, col, "Easy: " + std::to_string(nEasyMinutes) + ":" + sEasySeconds, olc::WHITE, 1); col += 15;
-		DrawString(10, col, "Medium: " + std::to_string(nMediumMinutes) + ":" + sMediumSeconds, olc::WHITE, 1); col += 15;
-		DrawString(10, col, "Hard: " + std::to_string(nHardMinutes) + ":" + sHardSeconds, olc::WHITE, 1); col += 30;
-
-		DrawString(10, col, "Press Enter for Main Menu", olc::WHITE, 1); col += 15;
-		DrawString(10, col, "Press Escape to Exit", olc::WHITE, 1);
+		DrawString(px, py, "Press Enter for Main Menu", olc::WHITE, nScale);
+		py += 15;
+		DrawString(px, py, "Press Escape to Exit", olc::WHITE, nScale);
 
 		if (GetKey(olc::Key::ENTER).bPressed) gameState = GameState::MAIN_MENU;
 		if (GetKey(olc::Key::ESCAPE).bPressed) quit = true;
@@ -546,14 +583,32 @@ private:
 		DrawCursor();
 		DrawNumbers();
 		std::string Solved = "PUZZLE SOLVED";
+
+		switch(difficulty)
+		{
+		case Difficulty::EASY:
+			if (solveTimer <= bestTimes.easy) Solved = "NEW BEST TIME";
+			break;
+		case Difficulty::MEDIUM:
+			if (solveTimer <= bestTimes.medium) Solved = "NEW BEST TIME";
+			break;
+		case Difficulty::HARD:
+			if (solveTimer <= bestTimes.hard) Solved = "NEW BEST TIME";
+			break;
+		}
+
 		int scale = ScreenWidth() / Solved.length() / 9;
 		int px = (ScreenWidth() - Solved.length() * scale * 8) / 2;
 		int py = (ScreenHeight() - scale) / 2;
 
 		if ((int)(solveDelayTimer * 2) % 3 != 0)
+		{
+			FillRect(px - nFrameDim, py - nFrameDim, Solved.length() * scale * 8 + 2 * nFrameDim, scale * 8 + 2 * nFrameDim, olc::GREY);
 			DrawString(px, py, Solved, olc::RED, scale);
+		}
 
-		if (solveDelayTimer > delay || GetKey(olc::Key::SPACE).bPressed || GetKey(olc::Key::ENTER).bPressed || GetKey(olc::Key::ESCAPE).bPressed)
+		if (solveDelayTimer > delay || GetKey(olc::Key::SPACE).bPressed || GetKey(olc::Key::ENTER).bPressed || 
+			GetKey(olc::Key::ESCAPE).bPressed || GetMouse(0).bPressed || GetMouse(1).bPressed)
 		{
 			solveDelayTimer = 0.0f;
 			gameState = GameState::DISPLAY_STATS;
@@ -590,12 +645,90 @@ private:
 		return { 0,0 };
 	}
 
+	std::string Time2String(float time)
+	{
+		float tempTime = time;
+
+		int nMinutes = tempTime / 60;
+		tempTime -= nMinutes * 60;
+		int nSeconds = tempTime;
+		tempTime -= nSeconds;
+		int nMilisseconds = tempTime * 1000;
+
+		std::string sMinutes = std::to_string(nMinutes);
+		if (nMinutes < 10) sMinutes = "0" + sMinutes;
+
+		std::string sSeconds = std::to_string(nSeconds);
+		if (nSeconds < 10) sSeconds = "0" + sSeconds;
+
+		std::string sMilisseconds = std::to_string(nMilisseconds);
+		if (nMilisseconds < 100) sMilisseconds = "0" + sMilisseconds;
+		if (nMilisseconds < 10) sMilisseconds = "0" + sMilisseconds;
+
+		if (nMinutes < 0) return "--:--.---";
+
+		return sMinutes + ":" + sSeconds + "." + sMilisseconds;
+	}
+
 	bool InBoard(float sx, float sy)
 	{
 		return sx >= nGridPx && sx <= nGridPx + nBoardDim && sy >= nGridPy && sy <= nGridPy + nBoardDim;
 	}
 
+	void UpdateBestTime()
+	{
+		switch (difficulty)
+		{
+		case Difficulty::EASY:
+			if (solveTimer < bestTimes.easy) bestTimes.easy = solveTimer;
+			break;
+		case Difficulty::MEDIUM:
+			if (solveTimer < bestTimes.medium) bestTimes.medium = solveTimer;
+			break;
+		case Difficulty::HARD:
+			if (solveTimer < bestTimes.hard) bestTimes.hard = solveTimer;
+			break;
+		}
+	}
+
+	void SaveBestTimes()
+	{
+		std::ofstream file("best_times.txt");
+		if (file.is_open())
+		{
+			file << bestTimes.easy << "\n";
+			file << bestTimes.medium << "\n";
+			file << bestTimes.hard << "\n";
+			file.close();
+		}
+		else
+			std::cerr << "Error: Failed to save best times." << std::endl;
+	}
+
+	void LoadBestTimes()
+	{
+		std::ifstream file("best_times.txt");
+		if (file.is_open())
+		{
+			std::string line;
+			if (std::getline(file, line)) bestTimes.easy = std::stof(line);
+			if (std::getline(file, line)) bestTimes.medium = std::stof(line);
+			if (std::getline(file, line)) bestTimes.hard = std::stof(line);
+			file.close();
+		}
+		else {
+			std::cerr << "Error: Failed to load best times. Creating a new file." << std::endl;
+		}
+	}
+
+	void EraseBestTimes()
+	{
+		bestTimes.easy = std::numeric_limits<float>::max();
+		bestTimes.medium = std::numeric_limits<float>::max();
+		bestTimes.hard = std::numeric_limits<float>::max();
+	}
 };
+
 
 int main()
 {
