@@ -7,16 +7,27 @@
 #include <sstream>
 #include <iostream>
 
-/*
-			px	#	T
-Cell		20	9	180
-Frame		3	2	6
-line		1	6	6
-3x3 grid	2	2	4
-Total H&W			196
-
-Number = 8x8
-
+/* Improvements
+1. Include number pad
+2. Smaller numbers for pencilmark
+3. Improve dificulty modes
+4. Check if puzzle has unique solution (maybe create a database of puzzles)
+5. Create a puzzle editor
+6. Add variants
+	- X/V
+	- dot
+	- Chess
+	- Killer
+	- Thermometer
+7. Add controls
+	- Color cells
+	- Draw lines
+	- 'X'
+	- 'O'
+	- Multiple color cells
+8. Improve mechanics
+	- Inserting a correct digit removes pencilmarks on row, col, grid
+	- Smart Hints
 */
 
 // Enums
