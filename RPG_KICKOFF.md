@@ -9,6 +9,12 @@ Paste or attach this at the start of a clean session. It holds only the decision
 - Split large tasks into chunks and give a roadmap before implementing.
 - Treat me as an experienced embedded developer who wants to deepen C/C++ skills.
 - Do not create PRs or push unless I ask.
+- **Source control is managed by Claude under my supervision:**
+  - Claude proposes branch names, commit groupings and messages, and shows me the diff summary before committing.
+  - Small, focused commits (one logical change each, ideally one per TDD cycle or task). Messages in imperative mood.
+  - Claude commits only after I approve. Pushing and PRs also need my approval each time.
+  - Never rewrite published history (no force-push, amend or rebase of pushed commits) without asking first.
+  - Keep generated files, build output and secrets (e.g. the Codecks token) out of the repo via `.gitignore`.
 
 ## Goal
 A turn-based RPG in the style of Final Fantasy 1-3 (rounds-based, party vs enemies). Later flair: ATB (FF4-9 style), equipment, overworld, polish.
