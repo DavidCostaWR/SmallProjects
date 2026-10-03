@@ -1,4 +1,4 @@
-# RPG Project: Session Kickoff
+# Entity Quest: Session Kickoff
 
 Paste or attach this at the start of a clean session. It holds only the decisions already made.
 
@@ -17,7 +17,7 @@ Paste or attach this at the start of a clean session. It holds only the decision
   - Keep generated files, build output and secrets (e.g. the Codecks token) out of the repo via `.gitignore`.
 
 ## Goal
-A turn-based RPG in the style of Final Fantasy 1-3 (rounds-based, party vs enemies). Later flair: ATB (FF4-9 style), equipment, overworld, polish.
+**Entity Quest** is a turn-based RPG in the style of Final Fantasy 1-3 (rounds-based, party vs enemies). Later flair: ATB (FF4-9 style), equipment, overworld, polish.
 The project is for learning and practice in C++ (and some C). It must actually get finished, so scope discipline matters more than ambition.
 
 ## Decisions made
@@ -32,7 +32,20 @@ The project is for learning and practice in C++ (and some C). It must actually g
 - **Frontends:** console first, raylib later.
 - **Environment:** Windows, CLion (MinGW or MSVC). VS and VSCode also available.
 - **Task tracking:** Codecks. No connector exists in Claude. Options: draft cards as markdown for import, or use the Codecks REST API with a token kept in an env var (never in the repo).
-- **Repo:** SmallProjects is a collection of C++/Visual Studio projects. The RPG could live in an `RPG/` subfolder here or in its own repo (undecided).
+- **Project folder:** `C:\Dev\Cpp\Entity-Quest` is the project base and must always stay organised. Preferably its own GitHub repo.
+- **Folder layout:**
+  ```
+  Entity-Quest/
+    docs/               GDD, kickoff notes, design decisions
+    core/               headless ECS game library
+    frontend_console/
+    tests/
+    data/               JSON content
+    cmake/
+    CMakeLists.txt
+    README.md
+    .gitignore
+  ```
 
 ## Minimal-version scope (initial proposal, to be confirmed in the GDD)
 - 4 party members, rounds-based turns ordered by speed.
